@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBER_CORE // Encryption & Security Suite v4.04</title>
+    <style>
+        :root {
+            --bg-color: #050805;
+            --term-green: #00ff66;
+            --term-green-dim: rgba(0, 255, 102, 0.15);
+            --term-green-glow: rgba(0, 255, 102, 0.4);
+            --amber: #ffb700;
+            --amber-dim: rgba(255, 183, 0, 0.15);
+            --cyan: #00f0ff;
+            --red: #ff0055;
+            --border-color: rgba(0, 255, 102, 0.3);
+            --font-stack: 'Courier New', Courier, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--term-green);
+            font-family: var(--font-stack);
+            min-height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+            border-left: 1px solid var(--border-color);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--term-green);
+            box-shadow: 0 0 5px var(--term-green);
+        }
+
+        /* Canvas Matrix Rain Background */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            opacity: 0.25;
+            pointer-events: none;
+        }
+
+        /* CRT Overlay Effects */
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 99;
+            pointer-events: none;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            ), linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.03),
+                rgba(0, 255, 0, 0.01),
+                rgba(0, 0, 255, 0.03)
+            );
+            background-size: 100% 3px, 6px 100%;
+        }
+
+        .crt-overlay::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: radial-gradient(circle at center, transparent 60%, rgba(0,0,0,0.7) 100%);
+            pointer-events: none;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.97; }
+            50% { opacity: 1; }
+            52% { opacity: 0.94; }
+            54% { opacity: 1; }
+            80% { opacity: 0.98; }
+            90% { opacity: 0.94; }
+            100% { opacity: 0.99; }
+        }
+
+        /* Main Container */
+        .terminal-container {
+            position: relative;
+            z-index: 10;
+            width: 95vw;
+            max-width: 1200px;
+            height: 90vh;
+            background: rgba(5, 8, 5, 0.85);
+            border: 2px solid var(--term-green);
+            box-shadow: 0 0 20px var(--term-green-glow), inset 0 0 15px var(--term-green-dim);
+            display: flex;
+            flex-direction: column;
+            animation: flicker 0.15s infinite;
+            backdrop-filter: blur(4px);
+            border-radius: 4px;
+        }
+
+        /* Header Layout */
+        .terminal-header {
+            border-bottom: 2px solid var(--term-green);
+            padding: 12px 16px;
+            background: rgba(0, 255, 102, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .sys-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 0 0 8px var(--term-green);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sys-title::before {
+            content: "■";
+            color: var(--amber);
+            animation: blink 1s steps(2, start) infinite;
+        }
+
+        @keyframes blink {
+            to { visibility: hidden; }
+        }
+
+        .sys-status-bar {
+            font-size: 0.75rem;
+            color: var(--amber);
+            display: flex;
+            gap: 15px;
+            text-transform: uppercase;
+        }
+
+        /* Navigation Tabs */
+        .tab-bar {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            border-right: 1px solid var(--border-color);
+            color: var(--term-green);
+            padding: 10px 20px;
+            font-family: var(--font-stack);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tab-btn:hover {
+            background: var(--term-green-dim);
+            color: #fff;
+            box-shadow: inset 0 0 8px var(--term-green);
+        }
+
+        .tab-btn.active {
+            background: var(--term-green);
+            color: #000;
+            font-weight: bold;
+            box-shadow: 0 0 10px var(--term-green);
+        }
+
+        /* Workspace Content */
+        .terminal-body {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .module-pane {
+            display: none;
+            height: 100%;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .module-pane.active {
+            display: flex;
+        }
+
+        /* UI Inputs & Controls */
+        textarea, input[type="text"], select {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--border-color);
+            color: var(--term-green);
+            font-family: var(--font-stack);
+            padding: 10px;
+            outline: none;
+            border-radius: 2px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        textarea:focus, input[type="text"]:focus, select:focus {
+            border-color: var(--term-green);
+            box-shadow: 0 0 8px var(--term-green-glow);
+        }
+
+        textarea {
+            resize: none;
+            width: 100%;
+            user-select: text;
+        }
+
+        .cyber-btn {
+            background: rgba(0, 255, 102, 0.1);
+            border: 1px solid var(--term-green);
+            color: var(--term-green);
+            padding: 8px 16px;
+            font-family: var(--font-stack);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .cyber-btn:hover {
+            background: var(--term-green);
+            color: #000;
+            box-shadow: 0 0 10px var(--term-green);
+        }
+
+        .cyber-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Grid Controls */
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: center;
+        }
+
+        .io-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            flex: 1;
+        }
+
+        @media (max-width: 768px) {
+            .io-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .io-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .io-group label {
+            font-size: 0.8rem;
+            color: var(--amber);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Range Slider Customization */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            flex: 1;
+            background: rgba(0, 255, 102, 0.1);
+            height: 6px;
+            border: 1px solid var(--border-color);
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--term-green);
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--term-green);
+        }
+
+        /* Password Strength / Entropy Lab */
+        .lab-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .meter-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .meter-bar-outer {
+            width: 100%;
+            height: 24px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--border-color);
+            position: relative;
+            padding: 2px;
+        }
+
+        .meter-bar-inner {
+            height: 100%;
+            width: 0%;
+            background: var(--red);
+            transition: width 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .metric-card {
+            background: rgba(0, 255, 102, 0.03);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .metric-card .title {
+            font-size: 0.75rem;
+            color: var(--amber);
+            text-transform: uppercase;
+        }
+
+        .metric-card .value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .warnings-list {
+            border: 1px solid rgba(255, 0, 85, 0.3);
+            background: rgba(255, 0, 85, 0.05);
+            padding: 12px;
+            border-radius: 2px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            font-size: 0.85rem;
+            color: #ff88a5;
+        }
+
+        /* Dynamic System Logs Module */
+        .log-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .log-terminal {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            font-size: 0.85rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            user-select: text;
+        }
+
+        .log-entry {
+            line-height: 1.4;
+            word-break: break-all;
+        }
+
+        .log-entry .timestamp {
+            color: var(--amber);
+            margin-right: 8px;
+        }
+
+        .log-entry.info { color: var(--term-green); }
+        .log-entry.warn { color: var(--amber); }
+        .log-entry.crit { color: var(--red); text-shadow: 0 0 5px var(--red); }
+        .log-entry.sec  { color: var(--cyan); }
+
+        /* Footer Status */
+        .terminal-footer {
+            border-top: 1px solid var(--border-color);
+            padding: 8px 16px;
+            font-size: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.4);
+            color: rgba(0, 255, 102, 0.6);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="crt-overlay"></div>
+
+    <canvas id="matrix-canvas"></canvas>
+
+    <div class="terminal-container">
+        
+        <header class="terminal-header">
+            <div class="sys-title">CYBER_CORE // SEC_SUITE_v4.04</div>
+            <div class="sys-status-bar">
+                <span id="typing-status">INITIALIZING...</span> |
+                <span>IP: <span id="sys-ip" style="color: #fff;">127.0.0.1</span></span> |
+                <span>ENC: <span style="color: var(--term-green);">AES-256-GCM</span></span>
+            </div>
+        </header>
+
+        <nav class="tab-bar">
+            <button class="tab-btn active" onclick="switchTab('cipher-module', this)">[1] CIPHER_ENGINE</button>
+            <button class="tab-btn" onclick="switchTab('entropy-module', this)">[2] ENTROPY_LAB</button>
+            <button class="tab-btn" onclick="switchTab('logs-module', this)">[3] DATA_STREAM</button>
+        </nav>
+
+        <main class="terminal-body">
+
+            <section id="cipher-module" class="module-pane active">
+                <div class="control-grid">
+                    <div class="io-group">
+                        <label for="cipher-algorithm">ALGORITHM_SELECT</label>
+                        <select id="cipher-algorithm" onchange="processCipher()">
+                            <option value="base64-enc">Base64 Encode</option>
+                            <option value="base64-dec">Base64 Decode</option>
+                            <option value="binary-enc">Binary Encode</option>
+                            <option value="binary-dec">Binary Decode</option>
+                            <option value="caesar-enc">Caesar Cipher (Encode)</option>
+                            <option value="caesar-dec">Caesar Cipher (Decode)</option>
+                            <option value="morse-enc">Morse Code Encode</option>
+                            <option value="morse-dec">Morse Code Decode</option>
+                        </select>
+                    </div>
+                    <div class="io-group" id="caesar-shift-group" style="display: none;">
+                        <label for="caesar-shift">SHIFT KEY: <span id="shift-val" style="color:#fff;">3</span></label>
+                        <div class="slider-container">
+                            <input type="range" id="caesar-shift" min="1" max="25" value="3" oninput="document.getElementById('shift-val').textContent=this.value; processCipher();">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="io-container">
+                    <div class="io-group">
+                        <label for="cipher-input">INPUT_STREAM</label>
+                        <textarea id="cipher-input" placeholder="Enter plaintext or ciphertext here..." oninput="processCipher()"></textarea>
+                    </div>
+                    <div class="io-group">
+                        <label for="cipher-output">PROCESSED_OUTPUT</label>
+                        <textarea id="cipher-output" readonly placeholder="Output payload will render here..."></textarea>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button class="cyber-btn" onclick="copyCipherOutput()">[COPY_PAYLOAD]</button>
+                    <button class="cyber-btn" onclick="clearCipher()">[CLEAR_IO]</button>
+                </div>
+            </section>
+
+            <section id="entropy-module" class="module-pane">
+                <div class="lab-panel">
+                    <div class="io-group">
+                        <label for="pwd-input">TARGET_PASSWORD_STRING</label>
+                        <input type="text" id="pwd-input" placeholder="Type a password to analyze security dynamic parameters..." oninput="analyzePassword()">
+                    </div>
+
+                    <div class="meter-container">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--amber);">
+                            <span>STRENGTH_METRIC</span>
+                            <span id="strength-label">NULL</span>
+                        </div>
+                        <div class="meter-bar-outer">
+                            <div id="meter-bar" class="meter-bar-inner"></div>
+                        </div>
+                    </div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <span class="title">Entropy Rating</span>
+                            <span class="value" id="val-entropy">0.00 bits</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="title">Character Count</span>
+                            <span class="value" id="val-length">0</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="title">Pool Size</span>
+                            <span class="value" id="val-pool">0 chars</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="title">Crack Time (10B/s)</span>
+                            <span class="value" id="val-crack">Instant</span>
+                        </div>
+                    </div>
+
+                    <div class="warnings-list" id="warnings-box" style="display: none;">
+                        <strong>[!] SECURITY ANOMALIES DETECTED:</strong>
+                        <ul id="warnings-ul" style="margin-left: 20px;"></ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="logs-module" class="module-pane">
+                <div class="log-controls">
+                    <button class="cyber-btn" id="toggle-stream-btn" onclick="toggleLogStream()">[PAUSE_STREAM]</button>
+                    <button class="cyber-btn" onclick="clearLogs()">[CLEAR_TERMINAL]</button>
+                </div>
+                <div class="log-terminal" id="log-terminal">
+                    </div>
+            </section>
+
+        </main>
+
+        <footer class="terminal-footer">
+            <span>SYS_MEM: 640KB OK</span>
+            <span>SEC_LEVEL: CLEARANCE TOP SECRET</span>
+            <span>STATUS: ACTIVE</span>
+        </footer>
+
+    </div>
+
+    <script>
+        /* --- 1. MATRIX RAIN CANVAS BACKGROUND --- */
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
+        const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*+-/<>{}[]';
+        const alphabet = katakana + latin;
+
+        const fontSize = 14;
+        let columns = Math.floor(canvas.width / fontSize);
+        let rainDrops = Array(columns).fill(1);
+
+        window.addEventListener('resize', () => {
+            columns = Math.floor(canvas.width / fontSize);
+            rainDrops = Array(columns).fill(1);
+        });
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(5, 8, 5, 0.08)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#00ff66';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < rainDrops.length; i++) {
+                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                const x = i * fontSize;
+                const y = rainDrops[i] * fontSize;
+
+                // Random white highlight head drop
+                if(Math.random() > 0.95) {
+                    ctx.fillStyle = '#ffffff';
+                } else {
+                    ctx.fillStyle = '#00ff66';
+                }
+
+                ctx.fillText(text, x, y);
+
+                if (y > canvas.height && Math.random() > 0.975) {
+                    rainDrops[i] = 0;
+                }
+                rainDrops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 33);
+
+        /* --- 2. HEADER ANIMATED TYPING & UI NAVIGATION --- */
+        const typingText = "CYBER_CORE ONLINE // READY";
+        const typingElement = document.getElementById("typing-status");
+        let typeIdx = 0;
+
+        function typeHeader() {
+            if (typeIdx < typingText.length) {
+                typingElement.textContent = typingText.substring(0, typeIdx + 1);
+                typeIdx++;
+                setTimeout(typeHeader, 50);
+            }
+        }
+        typeHeader();
+
+        // Generate Random IP for Header visual
+        document.getElementById('sys-ip').textContent = 
+            `${Math.floor(Math.random()*254)+1}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*254)+1}`;
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.module-pane').forEach(pane => pane.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        /* --- 3. MODULE 1: CIPHER & ENCODING ENGINE --- */
+        const MORSE_MAP = {
+            'A': '.-',    'B': '-...',  'C': '-.-.',  'D': '-..',   'E': '.',     'F': '..-.',
+            'G': '--.',   'H': '....',  'I': '..',    'J': '.---',  'K': '-.-',   'L': '.-..',
+            'M': '--',    'N': '-.',    'O': '---',   'P': '.--.',  'Q': '--.-',  'R': '.-.',
+            'S': '...',   'T': '-',     'U': '..-',   'V': '...-',  'W': '.--',   'X': '-..-',
+            'Y': '-.--',  'Z': '--..',  '1': '.----', '2': '..---', '3': '...--', '4': '....-',
+            '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----',
+            ' ': '/'
+        };
+        const REVERSE_MORSE = Object.fromEntries(Object.entries(MORSE_MAP).map(([k, v]) => [v, k]));
+
+        function processCipher() {
+            const algo = document.getElementById('cipher-algorithm').value;
+            const input = document.getElementById('cipher-input').value;
+            const outputEl = document.getElementById('cipher-output');
+            const shiftGroup = document.getElementById('caesar-shift-group');
+
+            shiftGroup.style.display = (algo.startsWith('caesar')) ? 'flex' : 'none';
+
+            if(!input) {
+                outputEl.value = '';
+                return;
+            }
+
+            try {
+                switch(algo) {
+                    case 'base64-enc':
+                        outputEl.value = btoa(unescape(encodeURIComponent(input)));
+                        break;
+                    case 'base64-dec':
+                        outputEl.value = decodeURIComponent(escape(atob(input)));
+                        break;
+                    case 'binary-enc':
+                        outputEl.value = input.split('').map(c => c.charCodeAt(0).toString(2).padStart(8, '0')).join(' ');
+                        break;
+                    case 'binary-dec':
+                        outputEl.value = input.trim().split(/\s+/).map(b => String.fromCharCode(parseInt(b, 2))).join('');
+                        break;
+                    case 'caesar-enc':
+                    case 'caesar-dec':
+                        let shift = parseInt(document.getElementById('caesar-shift').value);
+                        if(algo === 'caesar-dec') shift = (26 - shift) % 26;
+                        outputEl.value = caesarShift(input, shift);
+                        break;
+                    case 'morse-enc':
+                        outputEl.value = input.toUpperCase().split('').map(c => MORSE_MAP[c] || c).join(' ');
+                        break;
+                    case 'morse-dec':
+                        outputEl.value = input.trim().split(' ').map(c => REVERSE_MORSE[c] || c).join('');
+                        break;
+                }
+            } catch(e) {
+                outputEl.value = `[ERR] PROCESS FAILED: Invalid input payload format for selection.`;
+            }
+        }
+
+        function caesarShift(str, amount) {
+            return str.replace(/[a-zA-Z]/g, char => {
+                const code = char.charCodeAt(0);
+                const base = (code >= 97) ? 97 : 65;
+                return String.fromCharCode(((code - base + amount) % 26) + base);
+            });
+        }
+
+        function copyCipherOutput() {
+            const output = document.getElementById('cipher-output');
+            if(!output.value) return;
+            output.select();
+            navigator.clipboard.writeText(output.value);
+            
+            const btn = event.target;
+            const orig = btn.textContent;
+            btn.textContent = '[COPIED!]';
+            btn.style.background = 'var(--term-green)';
+            btn.style.color = '#000';
+            setTimeout(() => {
+                btn.textContent = orig;
+                btn.style.background = '';
+                btn.style.color = '';
+            }, 1200);
+        }
+
+        function clearCipher() {
+            document.getElementById('cipher-input').value = '';
+            document.getElementById('cipher-output').value = '';
+        }
+
+        /* --- 4. MODULE 2: PASSWORD ENTROPY LAB --- */
+        function analyzePassword() {
+            const pwd = document.getElementById('pwd-input').value;
+            const warningsBox = document.getElementById('warnings-box');
+            const warningsUl = document.getElementById('warnings-ul');
+            warningsUl.innerHTML = '';
+            
+            if (!pwd) {
+                resetEntropyLab();
+                return;
+            }
+
+            // Calculate Character Set Pool Size
+            let poolSize = 0;
+            const hasLower = /[a-z]/.test(pwd);
+            const hasUpper = /[A-Z]/.test(pwd);
+            const hasDigits = /[0-9]/.test(pwd);
+            const hasSymbols = /[^a-zA-Z0-9]/.test(pwd);
+
+            if (hasLower) poolSize += 26;
+            if (hasUpper) poolSize += 26;
+            if (hasDigits) poolSize += 10;
+            if (hasSymbols) poolSize += 33;
+
+            // Calculate Shannon Entropy
+            const entropy = pwd.length * (poolSize > 0 ? Math.log2(poolSize) : 0);
+
+            // Display basic metrics
+            document.getElementById('val-entropy').textContent = `${entropy.toFixed(2)} bits`;
+            document.getElementById('val-length').textContent = pwd.length;
+            document.getElementById('val-pool').textContent = `${poolSize} chars`;
+            document.getElementById('val-crack').textContent = estimateCrackTime(entropy);
+
+            // Dynamic Strength Meter Render
+            const meter = document.getElementById('meter-bar');
+            const label = document.getElementById('strength-label');
+            
+            let pct = Math.min(100, (entropy / 100) * 100);
+            meter.style.width = `${pct}%`;
+
+            if (entropy < 28) {
+                label.textContent = "CRITICAL // WEAK";
+                label.style.color = "var(--red)";
+                meter.style.backgroundColor = "var(--red)";
+                meter.style.boxShadow = "0 0 10px var(--red)";
+            } else if (entropy < 59) {
+                label.textContent = "MODERATE // VULNERABLE";
+                label.style.color = "var(--amber)";
+                meter.style.backgroundColor = "var(--amber)";
+                meter.style.boxShadow = "0 0 10px var(--amber)";
+            } else if (entropy < 80) {
+                label.textContent = "STRONG // SECURE";
+                label.style.color = "var(--term-green)";
+                meter.style.backgroundColor = "var(--term-green)";
+                meter.style.boxShadow = "0 0 10px var(--term-green)";
+            } else {
+                label.textContent = "MILITARY GRADE // OPTIMAL";
+                label.style.color = "var(--cyan)";
+                meter.style.backgroundColor = "var(--cyan)";
+                meter.style.boxShadow = "0 0 10px var(--cyan)";
+            }
+
+            // Warnings Check
+            const warnings = [];
+            if (pwd.length < 8) warnings.push("String length dangerously short (< 8 chars).");
+            if (!hasSymbols) warnings.push("Missing special character punctuation symbols.");
+            if (!hasDigits) warnings.push("No numeric digits present in string.");
+            if (/(.)\1\1/.test(pwd)) warnings.push("Repeated character patterns detected.");
+            if (/123|abc|password|admin|qwerty/i.test(pwd)) warnings.push("Contains common dictionary sequence / pattern.");
+
+            if (warnings.length > 0) {
+                warningsBox.style.display = 'flex';
+                warnings.forEach(w => {
+                    const li = document.createElement('li');
+                    li.textContent = w;
+                    warningsUl.appendChild(li);
+                });
+            } else {
+                warningsBox.style.display = 'none';
+            }
+        }
+
+        function estimateCrackTime(entropy) {
+            // Assuming 10 billion (10^10) guesses/sec brute-force system speed
+            const combinations = Math.pow(2, entropy);
+            const seconds = combinations / (2 * 10000000000);
+
+            if (seconds < 1) return "Instantaneous";
+            if (seconds < 60) return `${Math.floor(seconds)} secs`;
+            if (seconds < 3600) return `${Math.floor(seconds / 60)} mins`;
+            if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours`;
+            if (seconds < 31536000) return `${Math.floor(seconds / 86400)} days`;
+            if (seconds < 3153600000) return `${Math.floor(seconds / 31536000)} years`;
+            return "Centuries";
+        }
+
+        function resetEntropyLab() {
+            document.getElementById('val-entropy').textContent = "0.00 bits";
+            document.getElementById('val-length').textContent = "0";
+            document.getElementById('val-pool').textContent = "0 chars";
+            document.getElementById('val-crack').textContent = "Instant";
+            document.getElementById('strength-label').textContent = "NULL";
+            document.getElementById('meter-bar').style.width = "0%";
+            document.getElementById('warnings-box').style.display = "none";
+        }
+
+        /* --- 5. MODULE 3: DYNAMIC SYSTEM LOG STREAM --- */
+        let streamActive = true;
+        const logTerminal = document.getElementById('log-terminal');
+
+        const sampleLogs = [
+            { type: 'info', msg: 'SYN_ACK handshake initiated with 192.168.1.104:443' },
+            { type: 'sec',  msg: 'AES-GCM key rotation sequence completed successfully.' },
+            { type: 'warn', msg: 'High frequency requests detected from block range 45.12.99.0/24' },
+            { type: 'info', msg: 'Packet captured: Len=128 Protocol=TCP Flags=[PSH, ACK]' },
+            { type: 'crit', msg: 'ALERT: Unauthorized access attempt on port 22 (SSH) - IP Flagged' },
+            { type: 'sec',  msg: 'Decrypted stream payload: [0x41, 0x55, 0x54, 0x48, 0x5f, 0x4f, 0x4b]' },
+            { type: 'info', msg: 'System entropy pool replenished: +512 bits added.' },
+            { type: 'warn', msg: 'Latency spike in encrypted tunnel peer connection: +120ms' }
+        ];
+
+        function appendLog() {
+            if (!streamActive) return;
+
+            const entryData = sampleLogs[Math.floor(Math.random() * sampleLogs.length)];
+            const time = new Date().toISOString().split('T')[1].slice(0, 8);
+
+            const div = document.createElement('div');
+            div.className = `log-entry ${entryData.type}`;
+            div.innerHTML = `<span class="timestamp">[${time}]</span><span class="prefix">[${entryData.type.toUpperCase()}]</span> ${entryData.msg}`;
+
+            logTerminal.appendChild(div);
+            logTerminal.scrollTop = logTerminal.scrollHeight;
+
+            // Maintain log DOM limit for memory performance
+            if (logTerminal.children.length > 80) {
+                logTerminal.removeChild(logTerminal.firstChild);
+            }
+        }
+
+        let logInterval = setInterval(appendLog, 1200);
+
+        function toggleLogStream() {
+            streamActive = !streamActive;
+            const btn = document.getElementById('toggle-stream-btn');
+            btn.textContent = streamActive ? '[PAUSE_STREAM]' : '[RESUME_STREAM]';
+            btn.style.borderColor = streamActive ? 'var(--term-green)' : 'var(--amber)';
+            btn.style.color = streamActive ? 'var(--term-green)' : 'var(--amber)';
+        }
+
+        function clearLogs() {
+            logTerminal.innerHTML = '';
+        }
+    </script>
+</body>
+</html>

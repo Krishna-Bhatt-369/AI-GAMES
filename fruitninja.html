@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Blade Ninja - HTML5 Canvas Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #111;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            cursor: crosshair;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, #2c1d11 0%, #0f0a06 100%);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* UI Overlays */
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px 30px;
+        }
+
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            z-index: 10;
+        }
+
+        .score-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .score-label {
+            font-size: 16px;
+            color: #d4a359;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(0,0,0,0.8);
+        }
+
+        .score-value {
+            font-size: 48px;
+            color: #fff;
+            font-weight: 900;
+            text-shadow: 0 0 10px #ffaa00, 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .lives-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .heart {
+            font-size: 32px;
+            color: #ff3333;
+            text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        .heart.lost {
+            opacity: 0.2;
+            transform: scale(0.8);
+            text-shadow: none;
+            color: #555;
+        }
+
+        /* Screens (Start & Game Over) */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 10, 6, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto;
+            z-index: 20;
+            backdrop-filter: blur(4px);
+            transition: opacity 0.3s ease;
+        }
+
+        .screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .title {
+            font-size: 64px;
+            font-weight: 900;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 0 0 20px #ffaa00, 0 0 40px #ff5500, 4px 4px 0px #000;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: #d4a359;
+            margin-bottom: 40px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 24px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #fff;
+            background: linear-gradient(135deg, #ff9900 0%, #ff3300 100%);
+            border: 3px solid #ffcc00;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 153, 0, 0.6), inset 0 2px 5px rgba(255,255,255,0.5);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(255, 153, 0, 0.9), inset 0 2px 5px rgba(255,255,255,0.7);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .stats-box {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #d4a359;
+            border-radius: 12px;
+            padding: 20px 40px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .stat-item {
+            font-size: 20px;
+            color: #fff;
+            margin: 8px 0;
+        }
+
+        .stat-highlight {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+
+        <div class="ui-layer">
+            <div class="hud">
+                <div class="score-container">
+                    <span class="score-label">Score</span>
+                    <span id="scoreDisplay" class="score-value">0</span>
+                </div>
+                <div class="lives-container" id="livesDisplay">
+                    <span class="heart">♥</span>
+                    <span class="heart">♥</span>
+                    <span class="heart">♥</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="startScreen" class="screen">
+            <h1 class="title">Blade Ninja</h1>
+            <p class="subtitle">Slice fruits. Avoid bombs. Miss no target!</p>
+            <button class="btn" onclick="startGame()">Play Game</button>
+        </div>
+
+        <div id="gameOverScreen" class="screen hidden">
+            <h1 class="title" style="text-shadow: 0 0 20px #ff0000, 0 0 40px #aa0000;">Game Over</h1>
+            <div class="stats-box">
+                <div class="stat-item">Final Score: <span id="finalScore" class="stat-highlight">0</span></div>
+                <div class="stat-item">High Score: <span id="highScore" class="stat-highlight">0</span></div>
+            </div>
+            <button class="btn" onclick="startGame()">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Setup Canvas & Global Constants
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const GRAVITY = 0.38;
+        const MAX_LIVES = 3;
+
+        // Fruit Configurations (Rendered mathematically)
+        const FRUIT_TYPES = [
+            { type: 'watermelon', radius: 45, color: '#2e7d32', innerColor: '#e53935', score: 10, seedColor: '#000' },
+            { type: 'orange', radius: 35, color: '#ef6c00', innerColor: '#ffb74d', score: 10 },
+            { type: 'apple', radius: 32, color: '#c62828', innerColor: '#ffecb3', score: 10 },
+            { type: 'lime', radius: 28, color: '#558b2f', innerColor: '#c0ca33', score: 15 },
+            { type: 'coconut', radius: 38, color: '#4e342e', innerColor: '#fff', score: 20 }
+        ];
+
+        // Game State Variables
+        let gameState = 'MENU'; // MENU, PLAYING, GAMEOVER
+        let score = 0;
+        let highScore = localStorage.getItem('bladeNinja_highScore') || 0;
+        let lives = MAX_LIVES;
+        let objects = [];
+        let particles = [];
+        let splatters = [];
+        let mouseTrail = [];
+        let isMouseDown = false;
+        let lastSpawnTime = 0;
+        let spawnInterval = 1800;
+        let flashOpacity = 0;
+
+        // --- INPUT TRACKING ---
+        function addTrailPoint(x, y) {
+            mouseTrail.push({ x, y, time: Date.now() });
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            addTrailPoint(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('mousedown', (e) => {
+            isMouseDown = true;
+            mouseTrail = [];
+            addTrailPoint(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('mouseup', () => {
+            isMouseDown = false;
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                addTrailPoint(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        });
+
+        window.addEventListener('touchstart', (e) => {
+            isMouseDown = true;
+            mouseTrail = [];
+            if (e.touches.length > 0) {
+                addTrailPoint(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        });
+
+        window.addEventListener('touchend', () => {
+            isMouseDown = false;
+        });
+
+        // --- GAME CLASSES ---
+
+        class GameObject {
+            constructor(x, y, vx, vy, isBomb = false, fruitType = null) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.isBomb = isBomb;
+                this.fruit = fruitType || FRUIT_TYPES[Math.floor(Math.random() * FRUIT_TYPES.length)];
+                this.radius = isBomb ? 30 : this.fruit.radius;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.vRot = (Math.random() - 0.5) * 0.1;
+                this.sliced = false;
+                this.visible = true;
+                this.halves = [];
+                this.fuseTimer = 0;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += GRAVITY;
+                this.rotation += this.vRot;
+
+                if (this.isBomb) {
+                    this.fuseTimer += 0.2;
+                }
+
+                if (this.sliced) {
+                    this.halves.forEach(h => {
+                        h.x += h.vx;
+                        h.y += h.vy;
+                        h.vy += GRAVITY;
+                        h.rotation += h.vRot;
+                    });
+                }
+            }
+
+            draw() {
+                if (!this.visible) return;
+
+                if (!this.sliced) {
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.rotation);
+
+                    if (this.isBomb) {
+                        this.drawBomb();
+                    } else {
+                        this.drawFruit(this.fruit);
+                    }
+                    ctx.restore();
+                } else {
+                    // Draw Sliced Halves
+                    this.halves.forEach(h => {
+                        ctx.save();
+                        ctx.translate(h.x, h.y);
+                        ctx.rotate(h.rotation);
+                        this.drawHalfFruit(this.fruit, h.side);
+                        ctx.restore();
+                    });
+                }
+            }
+
+            drawBomb() {
+                // Main Bomb Body
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                const grad = ctx.createRadialGradient(-5, -5, 2, 0, 0, this.radius);
+                grad.addColorStop(0, '#555');
+                grad.addColorStop(1, '#111');
+                ctx.fillStyle = grad;
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#000';
+                ctx.stroke();
+
+                // Fuse Cap
+                ctx.fillStyle = '#888';
+                ctx.fillRect(-6, -this.radius - 4, 12, 6);
+
+                // Sparking Fuse
+                ctx.beginPath();
+                ctx.moveTo(0, -this.radius - 4);
+                ctx.quadraticCurveTo(10, -this.radius - 15, 15, -this.radius - 10);
+                ctx.strokeStyle = '#d4a359';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Fuse Spark Particles
+                if (Math.random() > 0.3) {
+                    ctx.beginPath();
+                    ctx.arc(15 + (Math.random()-0.5)*6, -this.radius - 10 + (Math.random()-0.5)*6, Math.random() * 4 + 2, 0, Math.PI * 2);
+                    ctx.fillStyle = Math.random() > 0.5 ? '#ffcc00' : '#ff3300';
+                    ctx.fill();
+                }
+            }
+
+            drawFruit(fruit) {
+                ctx.beginPath();
+                ctx.arc(0, 0, fruit.radius, 0, Math.PI * 2);
+                ctx.fillStyle = fruit.color;
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                ctx.stroke();
+
+                // Simple Fruit Detail Highlights
+                ctx.beginPath();
+                ctx.arc(-fruit.radius * 0.3, -fruit.radius * 0.3, fruit.radius * 0.3, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255,255,255,0.15)';
+                ctx.fill();
+            }
+
+            drawHalfFruit(fruit, side) {
+                ctx.beginPath();
+                // Draw Half Circle
+                ctx.arc(0, 0, fruit.radius, side === 'left' ? Math.PI / 2 : -Math.PI / 2, side === 'left' ? -Math.PI / 2 : Math.PI / 2);
+                ctx.closePath();
+                ctx.fillStyle = fruit.color;
+                ctx.fill();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+                ctx.stroke();
+
+                // Inner Pulp Rendering
+                ctx.beginPath();
+                ctx.arc(0, 0, fruit.radius - 4, side === 'left' ? Math.PI / 2 : -Math.PI / 2, side === 'left' ? -Math.PI / 2 : Math.PI / 2);
+                ctx.closePath();
+                ctx.fillStyle = fruit.innerColor;
+                ctx.fill();
+
+                // Watermelon Seeds
+                if (fruit.seedColor) {
+                    ctx.fillStyle = fruit.seedColor;
+                    ctx.fillRect(side === 'left' ? -8 : 4, -5, 3, 5);
+                    ctx.fillRect(side === 'left' ? -12 : 8, 8, 3, 5);
+                }
+            }
+
+            slice() {
+                if (this.sliced) return;
+                this.sliced = true;
+
+                if (!this.isBomb) {
+                    // Create Halves
+                    this.halves = [
+                        { x: this.x - 5, y: this.y, vx: this.vx - (Math.random() * 3 + 2), vy: this.vy - 1, rotation: this.rotation, vRot: -0.1, side: 'left' },
+                        { x: this.x + 5, y: this.y, vx: this.vx + (Math.random() * 3 + 2), vy: this.vy - 1, rotation: this.rotation, vRot: 0.1, side: 'right' }
+                    ];
+
+                    // Spawn Particles & Splatters
+                    createJuiceExplosion(this.x, this.y, this.fruit.innerColor);
+                    splatters.push(new Splatter(this.x, this.y, this.fruit.innerColor));
+                }
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color, isSpark = false) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.isSpark = isSpark;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = isSpark ? Math.random() * 8 + 2 : Math.random() * 6 + 1;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.radius = isSpark ? Math.random() * 3 + 1 : Math.random() * 5 + 2;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.03 + 0.015;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (!this.isSpark) this.vy += GRAVITY * 0.5;
+                this.alpha -= this.decay;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class Splatter {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.alpha = 0.6;
+                this.radius = Math.random() * 25 + 15;
+                this.drips = [];
+                for (let i = 0; i < 4; i++) {
+                    this.drips.push({
+                        dx: (Math.random() - 0.5) * this.radius * 1.5,
+                        dy: (Math.random() - 0.5) * this.radius * 1.5,
+                        r: Math.random() * 6 + 2
+                    });
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                this.drips.forEach(d => {
+                    ctx.beginPath();
+                    ctx.arc(this.x + d.dx, this.y + d.dy, d.r, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.restore();
+                this.alpha -= 0.0005; // Fade backdrop splatters extremely slowly
+            }
+        }
+
+        // --- HELPER FUNCTIONS ---
+
+        function createJuiceExplosion(x, y, color) {
+            for (let i = 0; i < 25; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+            for (let i = 0; i < 10; i++) {
+                particles.push(new Particle(x, y, '#ffffff', true));
+            }
+        }
+
+        function distToSegment(p, v, w) {
+            // Distance from point p to line segment vw
+            const l2 = (w.x - v.x) ** 2 + (w.y - v.y) ** 2;
+            if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
+            let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+            t = Math.max(0, Math.min(1, t));
+            return Math.hypot(p.x - (v.x + t * (w.x - v.x)), p.y - (v.y + t * (w.y - v.y)));
+        }
+
+        function spawnObjects() {
+            const count = Math.floor(Math.random() * 3) + 1; // 1 to 3 objects
+            for (let i = 0; i < count; i++) {
+                const x = Math.random() * (width - 200) + 100;
+                const y = height + 50;
+                const vx = (Math.random() - 0.5) * 8;
+                const vy = -(Math.random() * 5 + 14);
+                const isBomb = Math.random() < 0.2; // 20% bomb chance
+
+                objects.push(new GameObject(x, y, vx, vy, isBomb));
+            }
+        }
+
+        function triggerGameOver() {
+            gameState = 'GAMEOVER';
+            flashOpacity = 1.0;
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('bladeNinja_highScore', highScore);
+            }
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('highScore').textContent = highScore;
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+
+        function loseLife() {
+            lives--;
+            updateLivesUI();
+            if (lives <= 0) {
+                triggerGameOver();
+            }
+        }
+
+        function updateLivesUI() {
+            const hearts = document.querySelectorAll('.heart');
+            hearts.forEach((heart, index) => {
+                if (index >= lives) {
+                    heart.classList.add('lost');
+                } else {
+                    heart.classList.remove('lost');
+                }
+            });
+        }
+
+        function updateScore(points) {
+            score += points;
+            document.getElementById('scoreDisplay').textContent = score;
+        }
+
+        function startGame() {
+            score = 0;
+            lives = MAX_LIVES;
+            objects = [];
+            particles = [];
+            splatters = [];
+            mouseTrail = [];
+            spawnInterval = 1800;
+            updateScore(0);
+            updateLivesUI();
+            
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            gameState = 'PLAYING';
+            lastSpawnTime = Date.now();
+        }
+
+        // --- DRAW BLADE TRAIL ---
+        function drawBladeTrail() {
+            const now = Date.now();
+            // Prune old trail points
+            mouseTrail = mouseTrail.filter(p => now - p.time < 150);
+
+            if (mouseTrail.length < 2) return;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(mouseTrail[0].x, mouseTrail[0].y);
+
+            for (let i = 1; i < mouseTrail.length - 1; i++) {
+                const xc = (mouseTrail[i].x + mouseTrail[i + 1].x) / 2;
+                const yc = (mouseTrail[i].y + mouseTrail[i + 1].y) / 2;
+                ctx.quadraticCurveTo(mouseTrail[i].x, mouseTrail[i].y, xc, yc);
+            }
+
+            ctx.lineTo(mouseTrail[mouseTrail.length - 1].x, mouseTrail[mouseTrail.length - 1].y);
+
+            // Glowing Outer Blade
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.shadowColor = '#00e5ff';
+            ctx.shadowBlur = 15;
+            ctx.stroke();
+
+            // Core White Hot Center
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 0;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // --- MAIN GAME LOOP ---
+
+        function gameLoop() {
+            // Clear Screen
+            ctx.clearRect(0, 0, width, height);
+
+            // Render Backstage Splatters
+            splatters = splatters.filter(s => s.alpha > 0);
+            splatters.forEach(s => s.draw());
+
+            if (gameState === 'PLAYING') {
+                const now = Date.now();
+                
+                // Spawn Objects Interval
+                if (now - lastSpawnTime > spawnInterval) {
+                    spawnObjects();
+                    lastSpawnTime = now;
+                    // Slowly increase difficulty
+                    if (spawnInterval > 800) spawnInterval -= 15;
+                }
+
+                // Check Slicing Collision Mechanics
+                if (mouseTrail.length >= 2) {
+                    const p1 = mouseTrail[mouseTrail.length - 2];
+                    const p2 = mouseTrail[mouseTrail.length - 1];
+
+                    objects.forEach(obj => {
+                        if (!obj.sliced && obj.visible) {
+                            const d = distToSegment(obj, p1, p2);
+                            if (d < obj.radius) {
+                                if (obj.isBomb) {
+                                    triggerGameOver();
+                                } else {
+                                    obj.slice();
+                                    updateScore(obj.fruit.score);
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // Update & Render Game Objects
+            for (let i = objects.length - 1; i >= 0; i--) {
+                const obj = objects[i];
+                obj.update();
+                obj.draw();
+
+                // Missed Fruit Detection
+                if (!obj.sliced && !obj.isBomb && obj.vy > 0 && obj.y - obj.radius > height) {
+                    obj.visible = false;
+                    if (gameState === 'PLAYING') {
+                        loseLife();
+                    }
+                }
+
+                // Remove out-of-bounds objects
+                if (obj.y - obj.radius > height + 100 || obj.x < -100 || obj.x > width + 100) {
+                    objects.splice(i, 1);
+                }
+            }
+
+            // Update & Render Particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                p.draw();
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            // Render Interactive Blade Trail
+            drawBladeTrail();
+
+            // Screen Detonation Flash (Game Over Bomb Effect)
+            if (flashOpacity > 0) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${flashOpacity})`;
+                ctx.fillRect(0, 0, width, height);
+                flashOpacity -= 0.05;
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start Loop
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>

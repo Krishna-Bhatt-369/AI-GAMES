@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grandmaster Study Suite</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+
+    <style>
+        /* === Premium Dark Theme Variables === */
+        :root {
+            --bg-grad-1: #0b0f19;
+            --bg-grad-2: #111827;
+            --surface: #1f2937;
+            --accent-primary: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.4);
+            --accent-coach: #a855f7;
+            --text-main: #f8fafc;
+            --text-muted: #9ca3af;
+            --border: rgba(255, 255, 255, 0.08);
+            --error: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2));
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden;
+        }
+
+        /* === App Layout === */
+        .app-wrapper {
+            display: flex; width: 95vw; max-width: 1400px; height: 90vh;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden;
+        }
+
+        /* === Left: Board Area === */
+        .board-container {
+            flex: 1.2; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 30px; background: rgba(0,0,0,0.25); position: relative;
+        }
+
+        .board-sizer {
+            width: 100%; max-width: 550px; border-radius: 4px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        
+        .square-55d63 { position: relative; } 
+        .legal-move::after {
+            content: ''; position: absolute; top: 50%; left: 50%; width: 30%; height: 30%;
+            background-color: rgba(0, 0, 0, 0.4); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 2;
+        }
+        .legal-capture::before {
+            content: ''; position: absolute; top: 50%; left: 50%; width: 80%; height: 80%;
+            border: 6px solid rgba(0, 0, 0, 0.4); border-radius: 50%; background-color: transparent; transform: translate(-50%, -50%); pointer-events: none; z-index: 2;
+        }
+        .best-move { box-shadow: inset 0 0 0 5px var(--success) !important; }
+        .danger-square { box-shadow: inset 0 0 0 5px var(--error) !important; }
+
+        /* === Controls === */
+        .vcr-controls { display: flex; gap: 8px; margin-top: 25px; width: 100%; max-width: 550px; }
+        .btn {
+            flex: 1; background: #374151; color: var(--text-main); border: 1px solid var(--border);
+            padding: 12px; border-radius: 6px; font-size: 0.95rem; font-weight: 600; cursor: pointer;
+            transition: 0.2s; text-align: center;
+        }
+        .btn:hover { background: #4b5563; }
+        .btn.primary { background: var(--accent-primary); color: #000; border: none; }
+        .btn.primary:hover { background: #7dd3fc; }
+        .btn.coach { background: var(--accent-coach); color: #fff; border: none; }
+        .btn.coach:hover { background: #c084fc; }
+
+        #status-msg { margin-top: 20px; font-size: 1.1rem; font-weight: 600; text-align: center; height: 24px; color: var(--accent-primary); }
+
+        /* === Right: Sidebar Area === */
+        .sidebar { flex: 0.8; display: flex; flex-direction: column; border-left: 1px solid var(--border); background: #111827; }
+        .tabs-header { display: flex; border-bottom: 1px solid var(--border); background: #1f2937; }
+        .tab { flex: 1; padding: 16px; text-align: center; font-weight: 600; font-size: 0.95rem; color: var(--text-muted); cursor: pointer; border-bottom: 3px solid transparent; }
+        .tab:hover { color: var(--text-main); }
+        .tab.active { color: var(--accent-primary); border-bottom: 3px solid var(--accent-primary); background: rgba(56, 189, 248, 0.05); }
+        .tab-body { padding: 25px; display: none; overflow-y: auto; flex-grow: 1; }
+        .tab-body.active { display: block; }
+
+        h3 { margin-bottom: 10px; font-size: 1.15rem; }
+        p.subtitle { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px; line-height: 1.5; }
+        select, input[type="text"], textarea {
+            width: 100%; padding: 12px; background: #1f2937; color: var(--text-main);
+            border: 1px solid #374151; border-radius: 6px; margin-bottom: 15px; font-family: 'Inter', sans-serif;
+        }
+        select:focus, input:focus, textarea:focus { outline: none; border-color: var(--accent-primary); }
+        .divider { height: 1px; background: #374151; margin: 25px 0; }
+
+        /* Coach Panel */
+        .coach-panel { background: rgba(0,0,0,0.2); border: 1px solid #374151; border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .coach-stat { display: flex; justify-content: space-between; font-size: 0.95rem; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
+        .coach-val { font-weight: 800; }
+        .text-success { color: var(--success) !important; }
+        .text-error { color: var(--error) !important; }
+        .text-warning { color: var(--warning) !important; }
+
+        @media (max-width: 960px) {
+            .app-wrapper { flex-direction: column; height: 95vh; overflow-y: auto; }
+            .board-container { padding: 15px; }
+            .sidebar { border-left: none; border-top: 1px solid var(--border); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-wrapper">
+    <div class="board-container">
+        <div class="board-sizer">
+            <div id="board" style="width: 100%;"></div>
+        </div>
+        
+        <div class="vcr-controls" id="vcr">
+            <button class="btn" onclick="goToStart()">|&lt;</button>
+            <button class="btn" onclick="stepMove(-1)">&lt;</button>
+            <button class="btn primary" id="play-btn" onclick="togglePlay()">▶ Play</button>
+            <button class="btn" onclick="stepMove(1)">&gt;</button>
+            <button class="btn" onclick="goToEnd()">&gt;|</button>
+        </div>
+
+        <div id="status-msg">Welcome to the Chess Lab.</div>
+    </div>
+
+    <div class="sidebar">
+        <div class="tabs-header">
+            <div class="tab active" onclick="setTab('study')">Study</div>
+            <div class="tab" onclick="setTab('puzzle')">Puzzles</div>
+            <div class="tab" onclick="setTab('sandbox')">Sandbox</div>
+        </div>
+
+        <div class="tab-body active" id="tab-study">
+            <h3>📖 Masterpieces</h3>
+            <p class="subtitle">Select a historical game to review.</p>
+            <select id="game-select" onchange="loadGame(this.value)">
+                <option value="">-- Select Game --</option>
+                <option value="morphy">Morphy vs Duke Karl (1858)</option>
+                <option value="kasparov">Kasparov vs Topalov (1999)</option>
+            </select>
+            
+            <div class="divider"></div>
+            <h3>Load PGN</h3>
+            <textarea id="custom-pgn" rows="6" style="resize: none;" placeholder="Paste PGN here..."></textarea>
+            <button class="btn primary" onclick="loadCustomPGN()" style="width: 100%;">Load PGN</button>
+        </div>
+
+        <div class="tab-body" id="tab-puzzle">
+            <h3>🧩 Tactical Vision</h3>
+            <p class="subtitle">Play the correct sequence. The engine auto-replies.</p>
+            <button class="btn primary" onclick="loadPuzzle()" style="width:100%; margin-bottom: 20px;">Load New Puzzle</button>
+            <div id="puzzle-desc" style="padding: 15px; background: #374151; border-radius: 8px; font-weight: 600; text-align: center;">
+                Click "Load New Puzzle" to begin.
+            </div>
+        </div>
+
+        <div class="tab-body" id="tab-sandbox">
+            <h3>🤖 Analysis Sandbox</h3>
+            <p class="subtitle">Move freely. Play against the AI or scan for tactics.</p>
+            
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <button class="btn" onclick="board.flip()">🔄 Flip</button>
+                <button class="btn" onclick="undoSandbox()">↩️ Undo</button>
+                <button class="btn" onclick="resetSandbox()">♻️ Reset</button>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <button class="btn primary" onclick="playAIMove()" style="flex: 1;">🤖 Make AI Move</button>
+                <button class="btn coach" onclick="analyzePosition()" style="flex: 1;">🧠 Scan Tactics</button>
+            </div>
+            
+            <div class="coach-panel">
+                <div class="coach-stat">
+                    <span>Advantage:</span>
+                    <span class="coach-val" id="coach-mat">Even (0)</span>
+                </div>
+                <div class="coach-stat">
+                    <span>Status:</span>
+                    <span class="coach-val" id="coach-status">Normal</span>
+                </div>
+                <div class="coach-stat" style="flex-direction: column; gap: 8px; border: none; padding-bottom: 0;">
+                    <span style="color: var(--text-muted);">AI Analysis:</span>
+                    <span class="coach-val text-warning" id="coach-move" style="font-size: 0.9rem;">Play a move or click scan...</span>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+            <h3>Load Custom Setup</h3>
+            <input type="text" id="custom-fen" placeholder="Paste FEN string...">
+            <button class="btn" onclick="loadCustomFEN()" style="width:100%;">Load FEN</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let board = null;
+    let game = new Chess();
+    let mode = 'study'; 
+    let history = []; let currentMove = -1; let ticker = null;
+    let activePuzzle = null; let puzIndex = 0;
+
+    const dbGames = {
+        morphy: "1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8#",
+        kasparov: "1. e4 d6 2. d4 Nf6 3. Nc3 g6 4. Be3 Bg7 5. Qd2 c6 6. f3 b5 7. Nge2 Nbd7 8. Bh6 Bxh6 9. Qxh6 Bb7 10. a3 e5 11. O-O-O Qe7 12. Kb1 a6 13. Nc1 O-O-O 14. Nb3 exd4 15. Rxd4 c5 16. Rd1 Nb6 17. g3 Kb8 18. Na5 Ba8 19. Bh3 d5 20. Qf4+ Ka7 21. Rhe1 d4 22. Nd5 Nbxd5 23. exd5 Qd6 24. Rxd4 cxd4 25. Re7+ Kb6 26. Qxd4+ Kxa5 27. b4+ Ka4 28. Qc3 Qxd5 29. Ra7 Bb7 30. Rxb7 Qc4 31. Qxf6 Kxa3 32. Qxa6+ Kxb4 33. c3+ Kxc3 34. Qa1+ Kd2 35. Qb2+ Kd1 36. Bf1 Rd2 37. Rd7 Rxd7 38. Bxc4 bxc4 39. Qxh8 Rd3 40. Qa8 c3 41. Qa4+ Ke1 42. f4 f5 43. Kc1 Rd2 44. Qa7"
+    };
+
+    const dbPuzzles = [
+        { fen: "6k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1", sequence: ["e1e8"], desc: "White to move: Back Rank Mate" },
+        { fen: "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4", sequence: ["h5f7"], desc: "White to move: Scholar's Mate" },
+        { fen: "r1b1k2r/pppp1ppp/5n2/4q3/1b2P3/2N5/PPPB1PPP/R2QKB1R w KQkq - 4 8", sequence: ["a2a3", "b4c3", "d2c3"], desc: "White to move: Win material (Fork)" }
+    ];
+
+    $(document).ready(() => {
+        let config = {
+            draggable: true,
+            position: 'start',
+            // === FIXED: Pointing directly to the official chessboardjs.com image server ===
+            pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+            onDragStart: handleDragStart,
+            onDrop: handleDrop,
+            onSnapEnd: () => { board.position(game.fen()); removeHighlights(); updateCoachSilently(); }
+        };
+        
+        board = Chessboard('board', config);
+        
+        setTimeout(() => { board.resize(); }, 100);
+        $(window).resize(() => { board.resize(); });
+    });
+
+    function handleDragStart(source, piece) {
+        removeHighlights();
+        if (ticker || game.game_over()) return false;
+        if ((game.turn() === 'w' && piece.search(/^b/) !== -1) || (game.turn() === 'b' && piece.search(/^w/) !== -1)) return false;
+
+        let moves = game.moves({ square: source, verbose: true });
+        if (moves.length === 0) return;
+        moves.forEach(m => {
+            let sq = $('#board .square-' + m.to);
+            if(m.flags.includes('c') || m.flags.includes('e')) sq.addClass('legal-capture');
+            else sq.addClass('legal-move');
+        });
+    }
+
+    function removeHighlights() { 
+        $('#board .square-55d63').removeClass('legal-move legal-capture best-move danger-square'); 
+    }
+
+    function handleDrop(source, target) {
+        removeHighlights();
+        
+        if (mode === 'puzzle' && activePuzzle) {
+            let uci = source + target; let expected = activePuzzle.sequence[puzIndex];
+            let moveObj = { from: source, to: target };
+            if (game.get(source).type === 'p' && (target[1] === '8' || target[1] === '1')) moveObj.promotion = 'q';
+
+            if (uci === expected || uci+'q' === expected) {
+                let m = game.move(moveObj);
+                if (m) {
+                    puzIndex++; msg("Excellent move.", true);
+                    if (puzIndex >= activePuzzle.sequence.length) { msg("Puzzle Solved!", true); activePuzzle = null; return; }
+                    setTimeout(() => {
+                        let opp = activePuzzle.sequence[puzIndex];
+                        game.move({from: opp.substring(0,2), to: opp.substring(2,4), promotion: 'q'});
+                        board.position(game.fen()); puzIndex++; msg("Your turn.", true);
+                    }, 500);
+                }
+                return;
+            } else { msg("Incorrect move. Try again.", false); return 'snapback'; }
+        }
+
+        let m = game.move({ from: source, to: target, promotion: 'q' });
+        if (m === null) return 'snapback';
+        
+        if (mode === 'study') { history = game.history(); currentMove = history.length - 1; }
+        updateCoachSilently();
+    }
+
+    function msg(text, isGood = true) { 
+        $('#status-msg').text(text).removeClass('text-error text-success').css('color', isGood ? 'var(--accent-primary)' : 'var(--error)'); 
+    }
+
+    function setTab(m) {
+        mode = m; $('.tab, .tab-body').removeClass('active');
+        $(`.tab:contains('${m === 'sandbox' ? 'Sandbox' : m.charAt(0).toUpperCase() + m.slice(1)}')`).addClass('active');
+        $(`#tab-${m}`).addClass('active');
+        stopPlay(); removeHighlights(); setTimeout(() => board.resize(), 50); 
+        
+        if (m === 'study') { $('#vcr').show(); msg("Study Mode Active."); }
+        else if (m === 'puzzle') { $('#vcr').hide(); loadPuzzle(); }
+        else { $('#vcr').hide(); msg("Sandbox Active. Move freely."); resetSandbox(); }
+    }
+
+    function loadGame(key) { 
+        if (!key) return; 
+        stopPlay(); game.reset(); 
+        game.load_pgn(dbGames[key]); history = game.history(); 
+        game.reset(); board.position(game.fen()); currentMove = -1; 
+        msg("Game loaded. Press Play."); 
+    }
+    
+    function loadCustomPGN() {
+        let pgn = $('#custom-pgn').val(); if(!pgn) return;
+        stopPlay(); game.reset();
+        if(game.load_pgn(pgn)) {
+            history = game.history(); game.reset(); board.position(game.fen()); currentMove = -1; msg("Custom PGN loaded.");
+        } else { msg("Invalid PGN format.", false); }
+    }
+
+    function stepMove(dir) { 
+        stopPlay(); removeHighlights(); 
+        if (dir === 1 && currentMove < history.length - 1) { currentMove++; game.move(history[currentMove]); board.position(game.fen()); } 
+        else if (dir === -1 && currentMove >= 0) { game.undo(); currentMove--; board.position(game.fen()); } 
+    }
+    function goToStart() { stopPlay(); removeHighlights(); game.reset(); board.position(game.fen()); currentMove = -1; }
+    function goToEnd() { stopPlay(); removeHighlights(); while(currentMove < history.length - 1){ currentMove++; game.move(history[currentMove]); } board.position(game.fen()); }
+    function togglePlay() {
+        if(ticker) stopPlay(); else {
+            if(currentMove >= history.length - 1) goToStart(); $('#play-btn').html("⏸ Pause");
+            ticker = setInterval(() => { if (currentMove < history.length - 1) { currentMove++; game.move(history[currentMove]); board.position(game.fen()); } else stopPlay(); }, 800);
+        }
+    }
+    function stopPlay() { if(ticker) { clearInterval(ticker); ticker = null; $('#play-btn').html("▶ Play"); } }
+    
+    function loadPuzzle() { 
+        stopPlay(); removeHighlights(); 
+        activePuzzle = dbPuzzles[Math.floor(Math.random() * dbPuzzles.length)]; 
+        puzIndex = 0; game.load(activePuzzle.fen); board.position(game.fen()); 
+        $('#puzzle-desc').text(activePuzzle.desc); msg("Find the best move."); 
+        board.orientation(game.turn() === 'b' ? 'black' : 'white'); 
+    }
+    
+    function resetSandbox() { game.reset(); board.position('start'); board.orientation('white'); msg("Sandbox Reset."); removeHighlights(); updateCoachSilently(); }
+    function undoSandbox() { let move = game.undo(); if(move) { board.position(game.fen()); msg("Move undone."); updateCoachSilently(); } }
+    function loadCustomFEN() { let fen = $('#custom-fen').val(); if(!fen) return; if(game.load(fen)) { board.position(game.fen()); updateCoachSilently(); msg("FEN Loaded."); } else msg("Invalid FEN.", false); }
+
+    const pieceValues = { 'p': 10, 'n': 30, 'b': 30, 'r': 50, 'q': 90, 'k': 900 };
+
+    function evaluateBoard(g) {
+        let boardArr = g.board(); let score = 0;
+        for(let r=0; r<8; r++) {
+            for(let c=0; c<8; c++) {
+                let p = boardArr[r][c];
+                if(p) { let val = pieceValues[p.type]; score += (p.color === 'w') ? val : -val; }
+            }
+        }
+        return score;
+    }
+
+    function updateCoachSilently() {
+        if(mode !== 'sandbox') return;
+        let diff = evaluateBoard(game) / 10;
+        
+        if(diff === 0) $('#coach-mat').text("Even (0)").removeClass('text-success text-error');
+        else if(diff > 0) $('#coach-mat').text(`White (+${diff})`).removeClass('text-error').addClass('text-success');
+        else $('#coach-mat').text(`Black (+${Math.abs(diff)})`).removeClass('text-success').addClass('text-error');
+        
+        if (game.in_checkmate()) $('#coach-status').html('<span class="text-error">Checkmate!</span>');
+        else if (game.in_check()) $('#coach-status').html('<span class="text-warning">In Check!</span>');
+        else if (game.in_draw()) $('#coach-status').text('Draw');
+        else $('#coach-status').text('Normal');
+    }
+
+    function playAIMove() {
+        if (game.game_over()) { msg("Game Over.", false); return; }
+        
+        let moves = game.moves({ verbose: true });
+        let bestMove = null;
+        let bestScore = game.turn() === 'w' ? -9999 : 9999;
+
+        for(let m of moves) {
+            game.move(m);
+            if (game.in_checkmate()) { bestMove = m; game.undo(); break; }
+            let score = evaluateBoard(game) + (Math.random() * 0.1 - 0.05);
+            if (game.turn() === 'b' && score > bestScore) { bestScore = score; bestMove = m; } 
+            else if (game.turn() === 'w' && score < bestScore) { bestScore = score; bestMove = m; } 
+            game.undo();
+        }
+
+        if (bestMove) {
+            game.move(bestMove); board.position(game.fen());
+            msg(`AI Played: ${bestMove.san}`); updateCoachSilently();
+            removeHighlights();
+            $('.square-' + bestMove.from).addClass('danger-square');
+            $('.square-' + bestMove.to).addClass('danger-square');
+        }
+    }
+
+    function analyzePosition() {
+        removeHighlights();
+        if (game.game_over()) { msg("Game is over.", false); return; }
+
+        let moves = game.moves({ verbose: true });
+        let bestCapture = null; let maxGain = -1; let isMateIn1 = false; let mateMove = null;
+
+        for (let m of moves) {
+            game.move(m);
+            if (game.in_checkmate()) { isMateIn1 = true; mateMove = m; game.undo(); break; }
+            game.undo();
+
+            if (m.flags.includes('c') || m.flags.includes('e')) {
+                let gain = pieceValues[m.captured || 'p'] - (pieceValues[m.piece] * 0.1); 
+                if (gain > maxGain) { maxGain = gain; bestCapture = m; }
+            }
+        }
+        
+        if (isMateIn1) {
+            $('#coach-move').html(`<strong>Mate in 1: Play ${mateMove.san}</strong>`).removeClass('text-warning text-success').addClass('text-error');
+            $('.square-' + mateMove.from).addClass('best-move'); $('.square-' + mateMove.to).addClass('best-move');
+        } else if (bestCapture && maxGain > 0) {
+            $('#coach-move').html(`<strong>Tactic: Play ${bestCapture.san}</strong>`).removeClass('text-warning text-error').addClass('text-success');
+            $('.square-' + bestCapture.from).addClass('best-move'); $('.square-' + bestCapture.to).addClass('danger-square');
+        } else {
+            $('#coach-move').html("No immediate tactics found.").removeClass('text-error text-success').addClass('text-warning');
+        }
+        msg("Position Analyzed.");
+    }
+</script>
+</body>
+</html>

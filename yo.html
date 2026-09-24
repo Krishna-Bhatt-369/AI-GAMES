@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CYBER-SYNTH 2077</title>
+  <style>
+    /* ==========================================================================
+       1. GLOBAL & THEME SETUP (Dark Cyberpunk / Neumorphic Hybrid)
+       ========================================================================== */
+    :root {
+      --bg-color: #0a0b10;
+      --panel-bg: #12141d;
+      --panel-border: #1f2335;
+      --cyan: #00f3ff;
+      --magenta: #ff0055;
+      --amber: #ffb700;
+      --text-dim: #5a657b;
+      --text-main: #c0caf5;
+      --shadow-inset: inset 2px 2px 5px rgba(0,0,0,0.8), inset -2px -2px 5px rgba(255,255,255,0.03);
+      --shadow-outset: 5px 5px 10px rgba(0,0,0,0.5), -2px -2px 6px rgba(255,255,255,0.02);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    /* Main Container */
+    .synth-container {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 960px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), var(--shadow-outset);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ==========================================================================
+       2. HEADER BAR & CONTROLS
+       ========================================================================== */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-color);
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: var(--shadow-inset);
+      border: 1px solid rgba(0, 243, 255, 0.1);
+    }
+
+    .brand {
+      font-size: 1.2rem;
+      font-weight: 900;
+      letter-spacing: 3px;
+      color: var(--cyan);
+      text-shadow: 0 0 8px rgba(0, 243, 255, 0.6);
+    }
+
+    .status-panel {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .led-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .led {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #222;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .led.active {
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+    }
+
+    .select-style {
+      background: var(--panel-bg);
+      color: var(--cyan);
+      border: 1px solid var(--panel-border);
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-weight: bold;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Dashboard Layout */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--bg-color);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: var(--shadow-inset);
+      border: 1px solid rgba(255, 255, 255, 0.02);
+    }
+    .panel-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 12px;
+    }
+
+    /* ==========================================================================
+       3. VISUALIZER & SYNTH CONTROLS
+       ========================================================================== */
+    #visualizer {
+      width: 100%;
+      height: 120px;
+      background: #050608;
+      border-radius: 6px;
+      border: 1px solid rgba(0, 243, 255, 0.2);
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.9);
+    }
+
+    /* Waveform Toggles */
+    .wave-selector {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .btn-wave {
+      flex: 1;
+      padding: 8px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      color: var(--text-dim);
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.75rem;
+      transition: all 0.2s;
+    }
+    .btn-wave.active, .btn-wave:hover {
+      color: var(--cyan);
+      border-color: var(--cyan);
+      box-shadow: 0 0 8px rgba(0, 243, 255, 0.3);
+    }
+
+    /* Sliders & Dials Grid */
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 12px;
+    }
+    .control-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .control-item label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    /* Range Input Custom Styling */
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      background: transparent;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 4px;
+      background: #1a1d29;
+      border-radius: 2px;
+      border: 1px solid var(--panel-border);
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      background: var(--cyan);
+      margin-top: -6px;
+      box-shadow: 0 0 6px var(--cyan);
+      cursor: pointer;
+    }
+    input[type="range"].magenta::-webkit-slider-thumb {
+      background: var(--magenta);
+      box-shadow: 0 0 6px var(--magenta);
+    }
+    input[type="range"].amber::-webkit-slider-thumb {
+      background: var(--amber);
+      box-shadow: 0 0 6px var(--amber);
+    }
+
+    /* Vertical Sliders for ADSR */
+    .adsr-container {
+      display: flex;
+      justify-content: space-around;
+      height: 100px;
+      padding-top: 10px;
+    }
+    .adsr-container input[type="range"] {
+      writing-mode: bt-lr;
+      -webkit-appearance: slider-vertical;
+      width: 8px;
+      height: 80px;
+    }
+
+    /* ==========================================================================
+       4. KEYBOARD & DRUM PADS
+       ========================================================================== */
+    /* Drum Pads */
+    .pad-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      height: 100%;
+    }
+    .pad {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: var(--shadow-outset);
+      transition: all 0.05s ease;
+    }
+    .pad span.label { font-size: 0.7rem; font-weight: 800; color: var(--amber); }
+    .pad span.key { font-size: 0.6rem; color: var(--text-dim); }
+    .pad:active, .pad.active {
+      background: var(--amber);
+      box-shadow: 0 0 15px var(--amber);
+      border-color: #fff;
+    }
+    .pad:active span, .pad.active span { color: #000; }
+
+    /* Piano Keyboard */
+    .keyboard-container {
+      position: relative;
+      display: flex;
+      height: 140px;
+      width: 100%;
+      background: #000;
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid var(--panel-border);
+      overflow: hidden;
+    }
+    .key-white {
+      flex: 1;
+      background: linear-gradient(to bottom, #1a1c23 0%, #0e1015 100%);
+      border: 1px solid #000;
+      border-radius: 0 0 4px 4px;
+      position: relative;
+      cursor: pointer;
+      z-index: 1;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 8px;
+    }
+    .key-black {
+      width: 6%;
+      height: 60%;
+      background: linear-gradient(to bottom, #050505 0%, #151821 100%);
+      border: 1px solid #000;
+      border-radius: 0 0 3px 3px;
+      position: absolute;
+      z-index: 2;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 6px;
+    }
+    .key-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      pointer-events: none;
+    }
+
+    /* Key Active States */
+    .key-white.active {
+      background: var(--cyan);
+      box-shadow: 0 0 15px var(--cyan);
+    }
+    .key-white.active .key-label { color: #000; }
+    
+    .key-black.active {
+      background: var(--magenta);
+      box-shadow: 0 0 15px var(--magenta);
+    }
+    .key-black.active .key-label { color: #fff; }
+  </style>
+</head>
+<body>
+
+  <div class="synth-container">
+    <header class="header">
+      <div class="brand">CYBER-SYNTH 2077</div>
+      <div class="status-panel">
+        <label for="preset-select" style="font-size: 0.7rem; font-weight: bold; color: var(--text-dim);">PRESET:</label>
+        <select id="preset-select" class="select-style">
+          <option value="lead">Neon Lead</option>
+          <option value="bass">Cyber Bass</option>
+          <option value="pad">Atmospheric Pad</option>
+        </select>
+        <div class="led-indicator">
+          <div class="led" id="status-led"></div>
+          <span>Audio Engine</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="dashboard">
+      <div class="panel" style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="panel-title">Oscillator & Filter Settings</div>
+        
+        <canvas id="visualizer"></canvas>
+
+        <div class="wave-selector">
+          <button class="btn-wave active" data-wave="sine">SINE</button>
+          <button class="btn-wave" data-wave="square">SQUARE</button>
+          <button class="btn-wave" data-wave="sawtooth">SAW</button>
+          <button class="btn-wave" data-wave="triangle">TRI</button>
+        </div>
+
+        <div class="controls-grid" style="margin-top: 5px;">
+          <div class="control-item">
+            <label>Master Vol</label>
+            <input type="range" id="master-vol" min="0" max="1" step="0.01" value="0.7">
+          </div>
+          <div class="control-item">
+            <label>Transpose</label>
+            <input type="range" id="transpose" min="-12" max="12" step="1" value="0">
+          </div>
+          <div class="control-item">
+            <label>Cutoff</label>
+            <input type="range" class="magenta" id="cutoff" min="100" max="10000" step="10" value="2500">
+          </div>
+          <div class="control-item">
+            <label>Resonance</label>
+            <input type="range" class="magenta" id="resonance" min="0" max="20" step="0.1" value="2">
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="panel">
+          <div class="panel-title">Envelope (ADSR)</div>
+          <div class="adsr-container">
+            <div class="control-item">
+              <input type="range" class="amber" id="env-a" min="0.01" max="2" step="0.01" value="0.02">
+              <label>A</label>
+            </div>
+            <div class="control-item">
+              <input type="range" class="amber" id="env-d" min="0.01" max="2" step="0.01" value="0.3">
+              <label>D</label>
+            </div>
+            <div class="control-item">
+              <input type="range" class="amber" id="env-s" min="0" max="1" step="0.01" value="0.5">
+              <label>S</label>
+            </div>
+            <div class="control-item">
+              <input type="range" class="amber" id="env-r" min="0.01" max="3" step="0.01" value="0.4">
+              <label>R</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="flex: 1;">
+          <div class="panel-title">Percussion Soundboard</div>
+          <div class="pad-grid">
+            <div class="pad" data-pad="kick" data-key="1"><span class="label">KICK</span><span class="key">[1]</span></div>
+            <div class="pad" data-pad="snare" data-key="2"><span class="label">SNARE</span><span class="key">[2]</span></div>
+            <div class="pad" data-pad="hihat" data-key="3"><span class="label">HI-HAT</span><span class="key">[3]</span></div>
+            <div class="pad" data-pad="clap" data-key="4"><span class="label">CLAP</span><span class="key">[4]</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Polyphonic Keyboard Controller</div>
+      <div class="keyboard-container" id="keyboard"></div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       5. WEB AUDIO API ARCHITECTURE & CORE SYNTH ENGINE
+       ========================================================================== */
+    let audioCtx = null;
+    let masterGain = null;
+    let filterNode = null;
+    let analyserNode = null;
+    
+    // Synth Settings State
+    let currentWaveform = 'sine';
+    const activeVoices = {}; // Tracks active playing synth notes to allow polyphony
+
+    // Note map definition mapping keyboard keys to frequencies
+    const NOTE_MAP = [
+      { note: 'C4',  freq: 261.63, key: 'a', type: 'white' },
+      { note: 'C#4', freq: 277.18, key: 'w', type: 'black' },
+      { note: 'D4',  freq: 293.66, key: 's', type: 'white' },
+      { note: 'D#4', freq: 311.13, key: 'e', type: 'black' },
+      { note: 'E4',  freq: 329.63, key: 'd', type: 'white' },
+      { note: 'F4',  freq: 349.23, key: 'f', type: 'white' },
+      { note: 'F#4', freq: 369.99, key: 't', type: 'black' },
+      { note: 'G4',  freq: 392.00, key: 'g', type: 'white' },
+      { note: 'G#4', freq: 415.30, key: 'y', type: 'black' },
+      { note: 'A4',  freq: 440.00, key: 'h', type: 'white' },
+      { note: 'A#4', freq: 466.16, key: 'u', type: 'black' },
+      { note: 'B4',  freq: 493.88, key: 'j', type: 'white' },
+      { note: 'C5',  freq: 523.25, key: 'k', type: 'white' },
+      { note: 'C#5', freq: 554.37, key: 'o', type: 'black' },
+      { note: 'D5',  freq: 587.33, key: 'l', type: 'white' },
+    ];
+
+    // Lazy initialization of AudioContext on user interaction
+    function initAudio() {
+      if (audioCtx) return;
+      
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContext();
+
+      // Audio Graph Pipeline: Oscillator -> BiquadFilter -> MasterGain -> Analyser -> Output
+      analyserNode = audioCtx.createAnalyser();
+      analyserNode.fftSize = 2048;
+
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = parseFloat(document.getElementById('master-vol').value);
+
+      filterNode = audioCtx.createBiquadFilter();
+      filterNode.type = 'lowpass';
+      filterNode.frequency.value = parseFloat(document.getElementById('cutoff').value);
+      filterNode.Q.value = parseFloat(document.getElementById('resonance').value);
+
+      // Connect global processing chain
+      filterNode.connect(masterGain);
+      masterGain.connect(analyserNode);
+      analyserNode.connect(audioCtx.destination);
+
+      // Update LED Indicator Status
+      document.getElementById('status-led').classList.add('active');
+
+      // Begin Real-Time Visualization
+      renderOscilloscope();
+    }
+
+    // Play Synth Note (Polyphonic Voice Handling)
+    function playNote(noteKey, frequency) {
+      initAudio();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      if (activeVoices[noteKey]) return; // Avoid key-repeat re-triggering
+
+      const transposeSteps = parseInt(document.getElementById('transpose').value, 10);
+      const transposedFreq = frequency * Math.pow(2, transposeSteps / 12);
+
+      // Create Voice Nodes
+      const osc = audioCtx.createOscillator();
+      const voiceGain = audioCtx.createGain();
+
+      osc.type = currentWaveform;
+      osc.frequency.setValueAtTime(transposedFreq, audioCtx.currentTime);
+
+      // Read Envelope Settings (ADSR)
+      const attack = parseFloat(document.getElementById('env-a').value);
+      const decay = parseFloat(document.getElementById('env-d').value);
+      const sustain = parseFloat(document.getElementById('env-s').value);
+
+      // Envelope ADSR Implementation
+      const now = audioCtx.currentTime;
+      voiceGain.gain.setValueAtTime(0, now);
+      voiceGain.gain.linearRampToValueAtTime(1, now + attack);
+      voiceGain.gain.linearRampToValueAtTime(sustain, now + attack + decay);
+
+      // Connect Voice to Global Low Pass Filter
+      osc.connect(voiceGain);
+      voiceGain.connect(filterNode);
+
+      osc.start(now);
+      activeVoices[noteKey] = { osc, gain: voiceGain };
+    }
+
+    // Release Synth Note
+    function stopNote(noteKey) {
+      if (!activeVoices[noteKey]) return;
+
+      const { osc, gain } = activeVoices[noteKey];
+      const release = parseFloat(document.getElementById('env-r').value);
+      const now = audioCtx.currentTime;
+
+      // Graceful Decay Envelope Stage
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(gain.gain.value, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + release);
+
+      osc.stop(now + release);
+      setTimeout(() => {
+        osc.disconnect();
+        gain.disconnect();
+      }, release * 1000 + 50);
+
+      delete activeVoices[noteKey];
+    }
+
+    /* ==========================================================================
+       6. PERCUSSION / SOUNDBOARD SYNTHESIS (Zero External Samples)
+       ========================================================================== */
+    function triggerPercussion(type) {
+      initAudio();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'kick') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(120, now);
+        osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.4);
+        gain.gain.setValueAtTime(1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.connect(gain);
+        gain.connect(masterGain);
+        osc.start(now);
+        osc.stop(now + 0.4);
+
+      } else if (type === 'snare') {
+        // Synthesize snare using white noise buffer + tonal oscillator decay
+        const bufferSize = audioCtx.sampleRate * 0.2;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+
+        const noiseFilter = audioCtx.createBiquadFilter();
+        noiseFilter.type = 'highpass';
+        noiseFilter.frequency.value = 800;
+
+        const noiseEnvelope = audioCtx.createGain();
+        noiseEnvelope.gain.setValueAtTime(1, now);
+        noiseEnvelope.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
+        noise.connect(noiseFilter);
+        noiseFilter.connect(noiseEnvelope);
+        noiseEnvelope.connect(masterGain);
+
+        noise.start(now);
+        noise.stop(now + 0.2);
+
+      } else if (type === 'hihat') {
+        // High-pass filtered noise pulse
+        const bufferSize = audioCtx.sampleRate * 0.05;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 7000;
+
+        const envelope = audioCtx.createGain();
+        envelope.gain.setValueAtTime(0.6, now);
+        envelope.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+
+        noise.connect(filter);
+        filter.connect(envelope);
+        envelope.connect(masterGain);
+
+        noise.start(now);
+        noise.stop(now + 0.05);
+
+      } else if (type === 'clap') {
+        // Clustered noise burst
+        const bufferSize = audioCtx.sampleRate * 0.25;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 1200;
+
+        const envelope = audioCtx.createGain();
+        envelope.gain.setValueAtTime(0.8, now);
+        envelope.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+
+        noise.connect(filter);
+        filter.connect(envelope);
+        envelope.connect(masterGain);
+
+        noise.start(now);
+        noise.stop(now + 0.25);
+      }
+    }
+
+    /* ==========================================================================
+       7. DYNAMIC CANVAS OSCILLOSCOPE VISUALIZER
+       ========================================================================== */
+    function renderOscilloscope() {
+      const canvas = document.getElementById('visualizer');
+      const ctx = canvas.getContext('2d');
+      const bufferLength = analyserNode.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      function draw() {
+        requestAnimationFrame(draw);
+        analyserNode.getByteTimeDomainData(dataArray);
+
+        ctx.fillStyle = '#050608';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#00f3ff';
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#00f3ff';
+
+        ctx.beginPath();
+        const sliceWidth = canvas.width * 1.0 / bufferLength;
+        let x = 0;
+
+        for (let i = 0; i < bufferLength; i++) {
+          const v = dataArray[i] / 128.0;
+          const y = (v * canvas.height) / 2;
+
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+
+          x += sliceWidth;
+        }
+
+        ctx.lineTo(canvas.width, canvas.height / 2);
+        ctx.stroke();
+      }
+      
+      // Auto-fit canvas dimensions internally
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      draw();
+    }
+
+    /* ==========================================================================
+       8. UI BUILDER, EVENT BINDINGS & PRESETS
+       ========================================================================== */
+    // Dynamic Piano Keyboard Generation
+    function buildKeyboard() {
+      const keyboardEl = document.getElementById('keyboard');
+      const whiteKeys = NOTE_MAP.filter(n => n.type === 'white');
+      let whiteIndex = 0;
+
+      NOTE_MAP.forEach((item) => {
+        const keyEl = document.createElement('div');
+        keyEl.dataset.key = item.key;
+        keyEl.dataset.freq = item.freq;
+
+        if (item.type === 'white') {
+          keyEl.className = 'key-white';
+          whiteIndex++;
+        } else {
+          keyEl.className = 'key-black';
+          // Calculate black key offset position visually based on neighboring white key index
+          keyEl.style.left = `calc(${(whiteIndex / whiteKeys.length) * 100}% - 3%)`;
+        }
+
+        keyEl.innerHTML = `<span class="key-label">${item.key.toUpperCase()}</span>`;
+        
+        // Mouse/Touch Events
+        const startPlay = (e) => {
+          e.preventDefault();
+          playNote(item.key, item.freq);
+          keyEl.classList.add('active');
+        };
+        const stopPlay = (e) => {
+          e.preventDefault();
+          stopNote(item.key);
+          keyEl.classList.remove('active');
+        };
+
+        keyEl.addEventListener('mousedown', startPlay);
+        keyEl.addEventListener('mouseup', stopPlay);
+        keyEl.addEventListener('mouseleave', stopPlay);
+        keyEl.addEventListener('touchstart', startPlay);
+        keyEl.addEventListener('touchend', stopPlay);
+
+        keyboardEl.appendChild(keyEl);
+      });
+    }
+
+    // Physical Hardware QWERTY Key Bindings
+    window.addEventListener('keydown', (e) => {
+      if (e.repeat) return;
+      const key = e.key.toLowerCase();
+
+      // Check Piano Note Match
+      const noteObj = NOTE_MAP.find(n => n.key === key);
+      if (noteObj) {
+        playNote(noteObj.key, noteObj.freq);
+        const el = document.querySelector(`.keyboard-container [data-key="${key}"]`);
+        if (el) el.classList.add('active');
+      }
+
+      // Check Soundboard Drum Match
+      const padEl = document.querySelector(`.pad[data-key="${key}"]`);
+      if (padEl) {
+        triggerPercussion(padEl.dataset.pad);
+        padEl.classList.add('active');
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      const key = e.key.toLowerCase();
+      const noteObj = NOTE_MAP.find(n => n.key === key);
+      if (noteObj) {
+        stopNote(noteObj.key);
+        const el = document.querySelector(`.keyboard-container [data-key="${key}"]`);
+        if (el) el.classList.remove('active');
+      }
+
+      const padEl = document.querySelector(`.pad[data-key="${key}"]`);
+      if (padEl) padEl.classList.remove('active');
+    });
+
+    // GUI Controls Bindings (Waveforms, Sliders, Pads)
+    document.querySelectorAll('.btn-wave').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.btn-wave').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        currentWaveform = e.target.dataset.wave;
+      });
+    });
+
+    document.getElementById('master-vol').addEventListener('input', (e) => {
+      if (masterGain) masterGain.gain.value = parseFloat(e.target.value);
+    });
+    document.getElementById('cutoff').addEventListener('input', (e) => {
+      if (filterNode) filterNode.frequency.value = parseFloat(e.target.value);
+    });
+    document.getElementById('resonance').addEventListener('input', (e) => {
+      if (filterNode) filterNode.Q.value = parseFloat(e.target.value);
+    });
+
+    document.querySelectorAll('.pad').forEach(pad => {
+      pad.addEventListener('click', () => triggerPercussion(pad.dataset.pad));
+    });
+
+    // Sound Presets Switcher
+    document.getElementById('preset-select').addEventListener('change', (e) => {
+      const preset = e.target.value;
+      const setVal = (id, val) => {
+        document.getElementById(id).value = val;
+        document.getElementById(id).dispatchEvent(new Event('input'));
+      };
+
+      if (preset === 'lead') {
+        currentWaveform = 'sawtooth';
+        setVal('cutoff', 3500); setVal('resonance', 5);
+        setVal('env-a', 0.01); setVal('env-d', 0.2); setVal('env-s', 0.7); setVal('env-r', 0.2);
+      } else if (preset === 'bass') {
+        currentWaveform = 'square';
+        setVal('cutoff', 600); setVal('resonance', 8);
+        setVal('env-a', 0.01); setVal('env-d', 0.4); setVal('env-s', 0.2); setVal('env-r', 0.1);
+      } else if (preset === 'pad') {
+        currentWaveform = 'sine';
+        setVal('cutoff', 1800); setVal('resonance', 1);
+        setVal('env-a', 0.8); setVal('env-d', 1.2); setVal('env-s', 0.9); setVal('env-r', 1.5);
+      }
+
+      document.querySelectorAll('.btn-wave').forEach(b => {
+        b.classList.toggle('active', b.dataset.wave === currentWaveform);
+      });
+    });
+
+    // Initialize Keyboard UI on DOM Load
+    buildKeyboard();
+  </script>
+</body>
+</html>

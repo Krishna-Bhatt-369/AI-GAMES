@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UNO: Divine Heaven Edition</title>
+    <style>
+        /* === SYSTEM & HEAVENLY VARIABLES === */
+        :root {
+            --red: #ff4d6d; --blue: #40c4ff; --green: #69f0ae; --yellow: #ffd54f;
+            --gold: #ffcf54; --divine-white: #ffffff;
+            --bg-deep: #0b101e; --bg-light: #1c2841;
+            --glass: rgba(255, 255, 255, 0.03);
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+        body {
+            background-color: var(--bg-deep); height: 100vh; width: 100vw; overflow: hidden; color: var(--divine-white);
+            display: flex; flex-direction: column; 
+            background: radial-gradient(circle at 50% 0%, var(--bg-light) 0%, var(--bg-deep) 100%);
+        }
+
+        .hidden { display: none !important; opacity: 0; pointer-events: none; }
+
+        /* === ETHEREAL GLASS UI === */
+        .glass-panel {
+            background: var(--glass); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.02);
+        }
+
+        .overlay {
+            position: absolute; inset: 0; z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(11, 16, 30, 0.85); backdrop-filter: blur(20px); transition: 0.4s ease;
+        }
+
+        h1.title {
+            font-size: clamp(3rem, 7vw, 6rem); font-weight: 900; letter-spacing: 6px; text-align: center;
+            color: var(--divine-white); text-shadow: 0 0 30px rgba(255,255,255,0.6), 0 0 60px var(--gold); 
+            margin-bottom: 40px; text-transform: uppercase;
+        }
+
+        .btn {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: var(--divine-white); 
+            padding: 16px 50px; margin: 10px; font-size: 1.2rem; font-weight: 700; border-radius: 50px; 
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .btn:hover { background: var(--divine-white); color: var(--bg-deep); transform: translateY(-3px); box-shadow: 0 15px 30px rgba(255, 255, 255, 0.4); }
+
+        /* === GAME BOARD === */
+        #game-board { flex: 1; display: flex; flex-direction: column; position: relative; z-index: 1; }
+        
+        #hud { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 40px; padding: 12px 40px; z-index: 50; border-radius: 40px; }
+        .hud-item { font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,0.7); letter-spacing: 1px; }
+        #timer { color: var(--gold); font-variant-numeric: tabular-nums; text-shadow: 0 0 10px rgba(255,207,84,0.5); }
+
+        /* Opponents */
+        #opponents-container { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+        .opponent {
+            padding: 15px 25px; text-align: center; transition: 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: absolute; pointer-events: auto; opacity: 0.5;
+            background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px solid transparent; display: flex; flex-direction: column; align-items: center;
+        }
+        .opp-top { top: 80px; left: 50%; transform: translateX(-50%); }
+        .opp-left { top: 40%; left: 30px; transform: translateY(-50%); }
+        .opp-right { top: 40%; right: 30px; transform: translateY(-50%); }
+        .opponent.active { opacity: 1; border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.08); transform: scale(1.08); box-shadow: 0 15px 40px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.1); }
+        .opp-top.active { transform: translateX(-50%) scale(1.08); } .opp-left.active { transform: translateY(-50%) scale(1.08); } .opp-right.active { transform: translateY(-50%) scale(1.08); }
+        
+        .opp-name { font-weight: 800; font-size: 0.85rem; letter-spacing: 3px; color: rgba(255,255,255,0.9); margin-bottom: 12px; text-transform: uppercase; }
+        .opp-hand { display: flex; justify-content: center; position: relative; width: 70px; height: 45px; }
+        .mini-card { position: absolute; width: 30px; height: 45px; background: rgba(255,255,255,0.9); border: 1px solid rgba(0,0,0,0.1); border-radius: 5px; box-shadow: -2px 2px 10px rgba(0,0,0,0.4); }
+
+        /* Center Table */
+        #center-area { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; z-index: 10; }
+        #turn-indicator-text { font-size: 1.3rem; font-weight: 900; letter-spacing: 8px; margin-bottom: 30px; color: rgba(255,255,255,0.5); transition: 0.3s; text-transform: uppercase; }
+        #stack-warning { font-size: 1.5rem; font-weight: 900; color: var(--red); margin-bottom: 15px; height: 25px; animation: divinePulse 1.5s infinite alternate; letter-spacing: 3px; text-shadow: 0 0 20px var(--red); }
+        @keyframes divinePulse { from { opacity: 0.7; transform: scale(0.98); } to { opacity: 1; transform: scale(1.05); } }
+
+        .piles { display: flex; gap: 50px; align-items: center; position: relative; }
+        
+        #draw-pile {
+            width: clamp(100px, 16vw, 130px); height: clamp(150px, 24vw, 195px);
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 16px; cursor: pointer; box-shadow: -10px 15px 30px rgba(0,0,0,0.6);
+            display: flex; flex-direction: column; justify-content: center; align-items: center; color: rgba(255,255,255,0.8); font-weight: 900; transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            backdrop-filter: blur(10px);
+        }
+        #draw-pile:hover { transform: translateY(-8px); border-color: var(--divine-white); color: var(--divine-white); box-shadow: 0 20px 40px rgba(0,0,0,0.7), 0 0 20px rgba(255,255,255,0.2); }
+        #draw-pile.take-penalty { border-color: var(--red); color: var(--red); box-shadow: 0 0 30px rgba(255,77,109,0.5); }
+        #draw-pile.pass-mode { border-color: var(--gold); color: var(--gold); box-shadow: 0 0 30px rgba(255,213,79,0.3); }
+
+        #discard-pile { position: relative; width: clamp(100px, 16vw, 130px); height: clamp(150px, 24vw, 195px); }
+        
+        #active-color-ring { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 280px; height: 280px; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.35; transition: 0.8s ease-in-out; }
+
+        /* === PLAYER HAND & PHYSICS === */
+        #player-area { height: 35vh; display: flex; justify-content: center; align-items: flex-end; position: relative; z-index: 20; padding-bottom: 40px; pointer-events: none; }
+        #player-hand { position: relative; display: flex; justify-content: center; align-items: flex-end; width: 100%; max-width: 900px; height: 220px; perspective: 1000px; }
+
+        .card {
+            position: absolute; bottom: 0; width: clamp(90px, 15vw, 120px); height: clamp(135px, 22vw, 180px);
+            border-radius: 12px; display: flex; justify-content: center; align-items: center;
+            font-size: clamp(2.5rem, 5vw, 3.5rem); font-weight: 900; color: white; cursor: pointer;
+            box-shadow: -8px 15px 25px rgba(0,0,0,0.6); transform-origin: bottom center;
+            transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.3s;
+            border: 2px solid rgba(255,255,255,0.6);
+            transform: translateY(var(--fan-y)) rotate(var(--fan-rot));
+            pointer-events: auto; /* Re-enable clicks specifically for cards */
+        }
+
+        .card.playable:hover { transform: translateY(calc(var(--fan-y) - 30px)) rotate(var(--fan-rot)) scale(1.1) !important; z-index: 100 !important; border-color: var(--divine-white); box-shadow: 0 25px 50px rgba(0,0,0,0.8), 0 0 30px rgba(255,255,255,0.4); }
+        .card.unplayable { filter: brightness(0.5) opacity(0.7); } 
+        .card.unplayable:hover { transform: translateY(calc(var(--fan-y) - 10px)) rotate(var(--fan-rot)) !important; }
+
+        /* Error Shake Animation */
+        .shake { animation: errorShake 0.4s ease-in-out !important; border-color: var(--red) !important; box-shadow: 0 0 20px var(--red) !important; }
+        @keyframes errorShake {
+            0%, 100% { transform: translateY(var(--fan-y)) rotate(var(--fan-rot)); }
+            25% { transform: translateY(var(--fan-y)) rotate(calc(var(--fan-rot) - 5deg)) translateX(-10px); }
+            75% { transform: translateY(var(--fan-y)) rotate(calc(var(--fan-rot) + 5deg)) translateX(10px); }
+        }
+
+        .card::before { content: ''; position: absolute; inset: 0; border-radius: 10px; background: linear-gradient(120deg, rgba(255,255,255,0.4) 0%, transparent 40%, rgba(255,255,255,0.1) 100%); z-index: 5; pointer-events: none; }
+        .card.red { background: linear-gradient(135deg, var(--red), #cc0033); box-shadow: inset 0 0 20px rgba(255,255,255,0.3); }
+        .card.blue { background: linear-gradient(135deg, var(--blue), #0077cc); box-shadow: inset 0 0 20px rgba(255,255,255,0.3); }
+        .card.green { background: linear-gradient(135deg, var(--green), #00b359); box-shadow: inset 0 0 20px rgba(255,255,255,0.3); }
+        .card.yellow { background: linear-gradient(135deg, var(--yellow), #cc9900); box-shadow: inset 0 0 20px rgba(255,255,255,0.3); }
+        .card.wild { background: linear-gradient(135deg, var(--red) 0%, var(--blue) 33%, var(--green) 66%, var(--yellow) 100%); border-color: var(--gold); box-shadow: 0 0 20px rgba(255,213,79,0.3); }
+
+        .card-inner { background: rgba(255,255,255,0.95); width: 75%; height: 65%; border-radius: 50% / 100% 100% 30% 30%; transform: rotate(-15deg); display: flex; justify-content: center; align-items: center; color: #222; z-index: 2; box-shadow: inset 0 5px 15px rgba(0,0,0,0.2); border: 2px solid rgba(0,0,0,0.05); pointer-events: none; }
+        .card.wild .card-inner { background: #111; color: var(--divine-white); }
+        .card .val-top, .card .val-bot { position: absolute; font-size: clamp(1.2rem, 2.5vw, 1.5rem); font-weight: 900; z-index: 2; text-shadow: 2px 2px 5px rgba(0,0,0,0.6); color: var(--divine-white); pointer-events: none; }
+        .card .val-top { top: 8px; left: 10px; } .card .val-bot { bottom: 8px; right: 10px; transform: rotate(180deg); }
+
+        /* === DIVINE EMOJI SIDEBAR === */
+        #emoji-sidebar {
+            position: absolute; right: 40px; top: 50%; transform: translateY(-50%);
+            display: flex; flex-direction: column; gap: 20px; padding: 20px; 
+            border-radius: 30px; z-index: 100; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(15px); box-shadow: 0 15px 35px rgba(0,0,0,0.5); pointer-events: auto;
+        }
+        .emoji-btn { font-size: 2.2rem; cursor: pointer; transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); opacity: 0.7; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4)); }
+        .emoji-btn:hover { transform: scale(1.4) translateX(-10px); opacity: 1; filter: drop-shadow(0 0 15px rgba(255,255,255,0.5)); }
+        
+        .floating-emoji {
+            position: absolute; font-size: 4rem; pointer-events: none; z-index: 9999;
+            animation: etherealAscend 2.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6));
+        }
+        @keyframes etherealAscend { 0% { opacity: 0; transform: translateY(30px) scale(0.5); } 20% { opacity: 1; transform: translateY(0) scale(1.2); } 100% { opacity: 0; transform: translateY(-200px) scale(1); } }
+
+        /* Animations & Modals */
+        .flying-card { position: absolute; z-index: 9999; pointer-events: none !important; transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); margin: 0 !important; }
+        .action-text { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); font-size: 2.5rem; font-weight: 900; color: var(--divine-white); text-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(255,255,255,0.5); z-index: 9000; animation: heavenFloat 1.2s forwards; pointer-events: none; letter-spacing: 4px; }
+        @keyframes heavenFloat { 0% { transform: translate(-50%, -10%) scale(0.8); opacity: 0; } 20% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } 100% { transform: translate(-50%, -120%) scale(1); opacity: 0; filter: blur(5px); } }
+
+        #uno-btn { position: absolute; bottom: 160px; left: 50px; background: linear-gradient(135deg, var(--red), #cc0033); color: white; border: 2px solid rgba(255,255,255,0.5); padding: 25px 30px; font-size: 1.4rem; font-weight: 900; border-radius: 50%; cursor: pointer; box-shadow: 0 15px 40px rgba(255,77,109,0.6); z-index: 1000; transition: 0.3s; letter-spacing: 2px; pointer-events: auto; }
+        #uno-btn:hover { transform: scale(1.15); box-shadow: 0 20px 50px rgba(255,77,109,0.8), 0 0 30px rgba(255,255,255,0.5); }
+
+        .color-picker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 40px; }
+        .color-option { width: 110px; height: 110px; border-radius: 25px; cursor: pointer; border: 3px solid rgba(255,255,255,0.3); transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .color-option:hover { transform: scale(1.15); border-color: var(--divine-white); box-shadow: 0 0 30px rgba(255,255,255,0.5); }
+        .bg-red { background: linear-gradient(135deg, var(--red), #cc0033); box-shadow: 0 15px 35px rgba(255,77,109,0.5); } .bg-blue { background: linear-gradient(135deg, var(--blue), #0077cc); box-shadow: 0 15px 35px rgba(64,196,255,0.5); } .bg-green { background: linear-gradient(135deg, var(--green), #00b359); box-shadow: 0 15px 35px rgba(105,240,174,0.5); } .bg-yellow { background: linear-gradient(135deg, var(--yellow), #cc9900); box-shadow: 0 15px 35px rgba(255,213,79,0.5); }
+    </style>
+</head>
+<body>
+
+    <div id="main-menu" class="overlay" style="pointer-events: auto;">
+        <h1 class="title">DIVINE UNO</h1>
+        <div style="display: flex; gap: 20px;">
+            <button class="btn" onclick="initGame(2)">DUEL [1v1]</button>
+            <button class="btn" onclick="initGame(4)">SQUAD [4P]</button>
+        </div>
+    </div>
+
+    <div id="game-board" class="hidden">
+        <div id="hud" class="glass-panel">
+            <div class="hud-item">SCORE <span id="player-score-hud" style="color: var(--blue);">0</span></div>
+            <div class="hud-item" id="timer">03:00</div>
+        </div>
+
+        <div id="opponents-container"></div>
+        
+        <div id="center-area">
+            <div id="stack-warning"></div>
+            <div id="turn-indicator-text">ASCENDING...</div>
+            <div class="piles">
+                <div id="draw-pile" onpointerdown="humanDrawAction()">
+                    <span style="font-size: 2.5rem; color: rgba(255,255,255,0.7);" id="draw-icon">✦</span>
+                    <span id="draw-text" style="margin-top: 10px; font-size: 1rem; letter-spacing: 2px;">DRAW</span>
+                </div>
+                <div id="active-color-ring"></div>
+                <div id="discard-pile"></div>
+            </div>
+        </div>
+
+        <div id="player-area">
+            <div id="player-hand"></div>
+        </div>
+
+        <div id="emoji-sidebar">
+            <span class="emoji-btn" onpointerdown="sendEmoji('✨')">✨</span>
+            <span class="emoji-btn" onpointerdown="sendEmoji('🔥')">🔥</span>
+            <span class="emoji-btn" onpointerdown="sendEmoji('😇')">😇</span>
+            <span class="emoji-btn" onpointerdown="sendEmoji('😭')">😭</span>
+            <span class="emoji-btn" onpointerdown="sendEmoji('🕊️')">🕊️</span>
+        </div>
+
+        <button id="uno-btn" class="hidden" onpointerdown="shoutUno()">UNO</button>
+    </div>
+
+    <div id="color-modal" class="overlay hidden" style="pointer-events: auto;">
+        <h2 style="font-size: 2rem; letter-spacing: 6px; color: var(--divine-white); text-shadow: 0 0 20px rgba(255,255,255,0.5);">CHOOSE AURA</h2>
+        <div class="color-picker-grid">
+            <div class="color-option bg-red" onpointerdown="setColor('red')"></div>
+            <div class="color-option bg-blue" onpointerdown="setColor('blue')"></div>
+            <div class="color-option bg-green" onpointerdown="setColor('green')"></div>
+            <div class="color-option bg-yellow" onpointerdown="setColor('yellow')"></div>
+        </div>
+    </div>
+
+    <div id="game-over" class="overlay hidden" style="pointer-events: auto;">
+        <h1 class="title" id="winner-text">TRANSCENDED</h1>
+        <button class="btn" onclick="location.reload()">REBIRTH</button>
+    </div>
+
+    <script>
+        // === SYNTH AUDIO ===
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let actx = null;
+        function initAudio() { if (!actx) actx = new AudioContext(); if (actx.state === 'suspended') actx.resume(); }
+        function playTone(freq, type, duration, vol=0.05) {
+            if(!actx) return; const osc = actx.createOscillator(), gain = actx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, actx.currentTime);
+            gain.gain.setValueAtTime(vol, actx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + duration);
+            osc.connect(gain); gain.connect(actx.destination); osc.start(); osc.stop(actx.currentTime + duration);
+        }
+        const sfx = {
+            cardFly: () => playTone(600, 'sine', 0.2, 0.03),
+            stack: () => playTone(200, 'triangle', 0.4, 0.1),
+            action: () => { playTone(800, 'sine', 0.1, 0.03); setTimeout(()=>playTone(1200, 'sine', 0.15, 0.03), 100); },
+            error: () => playTone(100, 'sawtooth', 0.2, 0.05)
+        };
+
+        // === ENGINE STATE ===
+        const AI_NAMES = ["Seraph.1", "Cherub.2", "Archangel.3"];
+        const COLORS = ['red', 'blue', 'green', 'yellow'];
+        const VALUES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'Skip', 'Rev', '+2'];
+        
+        let deck = [], discard = [], players = [];
+        let turn = 0, dir = 1, activeColor = '', activeValue = '';
+        let isHumanTurn = false, waitingForColor = false, calledUno = false;
+        let stackPenalty = 0, stackType = null, hasDrawnThisTurn = false;
+
+        function initGame(count) {
+            initAudio(); document.getElementById('main-menu').classList.add('hidden'); document.getElementById('game-board').classList.remove('hidden');
+            deck = []; discard = []; players = []; turn = 0; dir = 1; stackPenalty = 0; stackType = null;
+            
+            COLORS.forEach(c => { VALUES.forEach(v => { deck.push({c, v, wild: false}); if(v !== '0') deck.push({c, v, wild: false}); }); });
+            for(let i=0; i<4; i++) { deck.push({c: 'wild', v: 'WILD', wild: true}); deck.push({c: 'wild', v: '+4', wild: true}); }
+            deck.sort(() => Math.random() - 0.5);
+
+            for(let i=0; i<count; i++) { 
+                players.push({ id: i, isHuman: i === 0, name: i === 0 ? "YOU" : AI_NAMES[i-1], hand: [], points: 0 }); 
+                for(let j=0; j<7; j++) players[i].hand.push(deck.pop()); 
+            }
+
+            let startCard;
+            do { startCard = deck.pop(); if(startCard.wild || isNaN(startCard.v)) deck.unshift(startCard); } while(startCard.wild || isNaN(startCard.v));
+            discard.push(startCard); activeColor = startCard.c; activeValue = startCard.v;
+            renderBoard(); setTimeout(processTurn, 1000);
+        }
+
+        window.sendEmoji = function(emoji, playerIdx = 0) {
+            const el = document.createElement('div');
+            el.className = 'floating-emoji'; el.innerText = emoji;
+            let sourceRect;
+            if (playerIdx === 0) {
+                sourceRect = document.getElementById('emoji-sidebar').getBoundingClientRect();
+                el.style.left = (sourceRect.left - 60) + 'px'; el.style.top = (sourceRect.top + sourceRect.height/2) + 'px';
+            } else {
+                const opps = document.querySelectorAll('.opponent'); sourceRect = opps[playerIdx - 1].getBoundingClientRect();
+                el.style.left = (sourceRect.left + sourceRect.width/2 - 30) + 'px'; el.style.top = (sourceRect.top + 20) + 'px';
+            }
+            document.body.appendChild(el); setTimeout(() => el.remove(), 2500);
+        }
+
+        function isPlayable(card) {
+            if (stackPenalty > 0) {
+                if (stackType === '+2') return card.v === '+2' || card.v === '+4';
+                if (stackType === '+4') return card.v === '+4';
+                return false; 
+            }
+            if (card.wild) return true;
+            return card.c === activeColor || card.v === activeValue;
+        }
+
+        function processTurn() {
+            hasDrawnThisTurn = false; 
+            const drawBtn = document.getElementById('draw-pile');
+            drawBtn.classList.remove('pass-mode');
+            document.getElementById('draw-text').innerText = "DRAW";
+            document.getElementById('draw-icon').innerText = "✦";
+
+            renderBoard(); const p = players[turn];
+            if (p.hand.length === 0) { p.points += 200; return endGame(); }
+
+            const txt = document.getElementById('turn-indicator-text');
+            if (p.isHuman) {
+                isHumanTurn = true; txt.innerText = "YOUR TURN"; txt.style.color = "var(--gold)"; txt.style.textShadow = "0 0 15px rgba(255,213,79,0.5)";
+            } else {
+                isHumanTurn = false; txt.innerText = `${p.name} IS THINKING`; txt.style.color = "rgba(255,255,255,0.6)"; txt.style.textShadow = "none";
+                if(Math.random() > 0.8) setTimeout(() => sendEmoji(['✨','🕊️','🤔','🔥'][Math.floor(Math.random()*4)], turn), 500);
+                setTimeout(aiPlay, 1000 + Math.random()*1200);
+            }
+        }
+
+        function animateCardThrow(sourceRect, cardObj, callback) {
+            sfx.cardFly();
+            const clone = document.createElement('div');
+            clone.innerHTML = buildCardHTML(cardObj).innerHTML;
+            clone.className = `card flying-card ${cardObj.wild ? 'wild' : cardObj.c}`;
+            clone.style.left = sourceRect.left + 'px'; clone.style.top = sourceRect.top + 'px';
+            clone.style.width = sourceRect.width + 'px'; clone.style.height = sourceRect.height + 'px';
+            clone.style.transform = `rotate(0deg)`; // Reset initial rotation
+            document.body.appendChild(clone);
+
+            const destPile = document.getElementById('discard-pile').getBoundingClientRect();
+            requestAnimationFrame(() => {
+                clone.style.transform = `translate(${destPile.left - sourceRect.left}px, ${destPile.top - sourceRect.top}px) scale(1.05)`;
+            });
+            setTimeout(() => { clone.remove(); callback(); }, 400);
+        }
+
+        function executePlay(playerIdx, cardIdx, domRect) {
+            isHumanTurn = false; const p = players[playerIdx]; const card = p.hand.splice(cardIdx, 1)[0];
+            renderBoard();
+            animateCardThrow(domRect, card, () => {
+                discard.push(card); activeValue = card.v;
+                p.points += card.wild ? 50 : (isNaN(card.v) ? 20 : 10);
+                if(p.isHuman && p.hand.length === 1 && !calledUno) spawnActionText("MISSED UNO! +2", "var(--red)");
+
+                if (card.wild) {
+                    if (p.isHuman) { waitingForColor = true; document.getElementById('color-modal').classList.remove('hidden'); return; }
+                    else { activeColor = COLORS[Math.floor(Math.random() * COLORS.length)]; card.c = activeColor; }
+                } else activeColor = card.c;
+                finalizePlay(card.v);
+            });
+        }
+
+        function finalizePlay(val) {
+            let skip = false;
+            if (val === 'Rev') { sfx.action(); dir *= -1; spawnActionText("REVERSED"); if (players.length === 2) skip = true; }
+            else if (val === 'Skip') { sfx.action(); spawnActionText("SKIPPED"); skip = true; }
+            else if (val === '+2' || val === '+4') {
+                sfx.stack(); stackType = val; stackPenalty += (val === '+2' ? 2 : 4);
+                spawnActionText(`STACK: +${stackPenalty}`, "var(--red)");
+            }
+            turn = (turn + dir + players.length) % players.length;
+            if (skip) turn = (turn + dir + players.length) % players.length;
+            processTurn();
+        }
+
+        // === ROCK SOLID INPUT HANDLING ===
+        window.humanPlayCard = function(cardIdx, element) {
+            if (!isHumanTurn || waitingForColor) return;
+            const card = players[0].hand[cardIdx];
+            
+            if (isPlayable(card)) {
+                const rect = element.getBoundingClientRect();
+                element.style.visibility = 'hidden'; 
+                executePlay(0, cardIdx, rect);
+            } else {
+                // Instantly tell the user the card is not allowed
+                sfx.error();
+                element.classList.add('shake');
+                setTimeout(() => element.classList.remove('shake'), 400);
+            }
+        }
+
+        window.humanDrawAction = function() {
+            if (!isHumanTurn || waitingForColor) return;
+            const drawBtn = document.getElementById('draw-pile');
+            if (stackPenalty > 0) {
+                sfx.error(); spawnActionText(`DREW ${stackPenalty}`, "var(--red)");
+                for(let i=0; i<stackPenalty; i++) players[0].hand.push(drawCard());
+                stackPenalty = 0; stackType = null; isHumanTurn = false;
+                turn = (turn + dir + players.length) % players.length; renderBoard(); setTimeout(processTurn, 800);
+            } else if (!hasDrawnThisTurn) {
+                sfx.action(); players[0].hand.push(drawCard()); hasDrawnThisTurn = true; 
+                drawBtn.classList.add('pass-mode');
+                document.getElementById('draw-text').innerText = "PASS";
+                document.getElementById('draw-icon').innerText = "⏭";
+                renderBoard();
+            } else {
+                isHumanTurn = false; turn = (turn + dir + players.length) % players.length; processTurn();
+            }
+        }
+
+        window.setColor = function(c) {
+            activeColor = c; discard[discard.length-1].c = c;
+            document.getElementById('color-modal').classList.add('hidden'); waitingForColor = false; finalizePlay(activeValue);
+        }
+
+        window.shoutUno = function() { calledUno = true; document.getElementById('uno-btn').classList.add('hidden'); spawnActionText("UNO", "var(--gold)"); }
+
+        function drawCard() {
+            if (deck.length === 0) {
+                const top = discard.pop(); deck = discard.sort(() => Math.random() - 0.5); discard = [top];
+                deck.forEach(c => { if(c.wild) c.c = 'wild'; });
+            }
+            return deck.pop();
+        }
+
+        function aiPlay() {
+            const hand = players[turn].hand; let validIdx = hand.findIndex(c => isPlayable(c));
+            if (stackPenalty > 0) {
+                if (validIdx !== -1) {
+                    executePlay(turn, validIdx, document.querySelectorAll('.opponent')[turn-1].getBoundingClientRect());
+                } else {
+                    if(Math.random() > 0.5) sendEmoji('😭', turn);
+                    sfx.error(); spawnActionText(`${players[turn].name} DREW ${stackPenalty}`, "rgba(255,255,255,0.8)");
+                    for(let i=0; i<stackPenalty; i++) hand.push(drawCard());
+                    stackPenalty = 0; stackType = null; turn = (turn + dir + players.length) % players.length; processTurn();
+                }
+            } else {
+                if (validIdx !== -1) {
+                    executePlay(turn, validIdx, document.querySelectorAll('.opponent')[turn-1].getBoundingClientRect());
+                } else {
+                    hand.push(drawCard()); spawnActionText("DRAW", "rgba(255,255,255,0.8)");
+                    if(isPlayable(hand[hand.length-1])) {
+                        setTimeout(() => executePlay(turn, hand.length-1, document.querySelectorAll('.opponent')[turn-1].getBoundingClientRect()), 800);
+                    } else { turn = (turn + dir + players.length) % players.length; setTimeout(processTurn, 800); }
+                }
+            }
+        }
+
+        function renderBoard() {
+            const ringColor = activeColor === 'red' ? 'var(--red)' : activeColor === 'blue' ? 'var(--blue)' : activeColor === 'green' ? 'var(--green)' : 'var(--yellow)';
+            document.getElementById('active-color-ring').style.background = ringColor;
+            document.getElementById('active-color-ring').style.boxShadow = `0 0 100px ${ringColor}`;
+            
+            document.getElementById('discard-pile').innerHTML = buildCardHTML(discard[discard.length - 1], null, false).outerHTML;
+            const topCard = document.getElementById('discard-pile').firstChild;
+            topCard.style.position = 'relative'; topCard.style.transform = `rotate(0deg)`;
+
+            const warn = document.getElementById('stack-warning'); const drawBtn = document.getElementById('draw-pile');
+            if(stackPenalty > 0) { warn.innerText = `STACK: +${stackPenalty}`; if(isHumanTurn) drawBtn.classList.add('take-penalty'); }
+            else { warn.innerText = ''; drawBtn.classList.remove('take-penalty'); }
+
+            const oppContainer = document.getElementById('opponents-container'); oppContainer.innerHTML = '';
+            for(let i=1; i<players.length; i++) {
+                let mCards = ''; for(let c=0; c<players[i].hand.length; c++) mCards += `<div class="mini-card" style="left: ${c*10}px; transform: rotate(${(c-players[i].hand.length/2)*5}deg)"></div>`;
+                oppContainer.innerHTML += `<div class="opponent glass-panel ${players.length===2?'opp-top':(i===1?'opp-left':(i===2?'opp-top':'opp-right'))} ${turn===i?'active':''}">
+                    <div class="opp-name">${players[i].name}</div><div class="opp-hand">${mCards}</div></div>`;
+            }
+
+            const handArea = document.getElementById('player-hand'); handArea.innerHTML = '';
+            const total = players[0].hand.length;
+            players[0].hand.forEach((card, i) => {
+                const dom = buildCardHTML(card, i, true);
+                if (isHumanTurn && isPlayable(card)) {
+                    dom.classList.add('playable');
+                } else {
+                    dom.classList.add('unplayable');
+                }
+                const angle = (i - (total - 1) / 2) * 4; 
+                const yOffset = Math.abs(i - (total - 1) / 2) * 5;
+                dom.style.setProperty('--fan-rot', `${angle}deg`);
+                dom.style.setProperty('--fan-y', `${yOffset}px`);
+                dom.style.left = `calc(50% - 45px + ${(i - (total-1)/2) * 40}px)`;
+                
+                // Bulletproof pointerdown event attached directly to the DOM element
+                dom.onpointerdown = function(e) {
+                    e.preventDefault(); // Prevents double firing and ghost clicks
+                    humanPlayCard(i, this);
+                };
+                
+                handArea.appendChild(dom);
+            });
+        }
+
+        function buildCardHTML(card, idx = null, inHand = false) {
+            const div = document.createElement('div');
+            let centerText = card.v.length > 3 ? card.v.substring(0,3) : card.v;
+            if(centerText === 'Ski') centerText = '⊘'; if(centerText === 'Rev') centerText = '⇄';
+            div.className = `card ${card.wild ? 'wild' : card.c}`;
+            div.innerHTML = `<div class="val-top">${card.v}</div><div class="card-inner">${centerText}</div><div class="val-bot">${card.v}</div>`;
+            return div;
+        }
+
+        function spawnActionText(text, color = 'white') {
+            const el = document.createElement('div'); el.className = 'action-text'; el.innerText = text; el.style.color = color;
+            document.getElementById('center-area').appendChild(el); setTimeout(() => el.remove(), 1200);
+        }
+
+        function endGame() { document.getElementById('game-board').classList.add('hidden'); document.getElementById('game-over').classList.remove('hidden'); }
+    </script>
+</body>
+</html>
