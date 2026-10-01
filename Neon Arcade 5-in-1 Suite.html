@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Arcade 5-in-1 Suite</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        neonPink: '#ff007f',
+                        neonCyan: '#00f3ff',
+                        neonGreen: '#0f0',
+                        neonPurple: '#b026ff',
+                        neonYellow: '#ffea00',
+                        darkBg: '#090a0f',
+                        cardBg: '#121526'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Courier New', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #060812;
+            color: #f1f5f9;
+            font-family: 'Rajdhani', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow-x: hidden;
+        }
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        
+        /* Neon Glow Effects */
+        .glow-cyan { text-shadow: 0 0 10px #00f3ff, 0 0 20px #00f3ff; }
+        .glow-pink { text-shadow: 0 0 10px #ff007f, 0 0 20px #ff007f; }
+        .glow-green { text-shadow: 0 0 10px #00ff66, 0 0 20px #00ff66; }
+        .box-glow-cyan { box-shadow: 0 0 15px rgba(0, 243, 255, 0.4); }
+        .box-glow-pink { box-shadow: 0 0 15px rgba(255, 0, 127, 0.4); }
+        
+        /* CRT Overlay Effect */
+        .crt::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 40;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+        
+        /* Arcade Glass Reflection */
+        .arcade-screen {
+            position: relative;
+            background: #080b14;
+            border: 2px solid #00f3ff;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #090a0f; }
+        ::-webkit-scrollbar-thumb { background: #00f3ff; border-radius: 3px; }
+
+        canvas {
+            display: block;
+            touch-action: none;
+        }
+
+        .active-tab {
+            background-color: rgba(0, 243, 255, 0.2);
+            border-color: #00f3ff;
+            color: #00f3ff;
+            box-shadow: 0 0 12px rgba(0, 243, 255, 0.4);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col crt antialiased selection:bg-neonPink selection:text-white">
+
+    <!-- Top Header Bar -->
+    <header class="bg-darkBg/90 backdrop-blur border-b border-cyan-900/50 sticky top-0 z-50 px-4 py-2 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-3">
+            <button onclick="switchTab('hub')" class="flex items-center gap-2 group focus:outline-none">
+                <div class="w-8 h-8 rounded bg-gradient-to-tr from-neonPink to-neonCyan flex items-center justify-center font-orbitron font-bold text-black text-xl shadow-lg transform group-hover:scale-105 transition">N</div>
+                <span class="font-orbitron font-extrabold text-xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-neonCyan via-white to-neonPink">
+                    NEON<span class="text-neonPink">ARCADE</span>
+                </span>
+            </button>
+            <span class="hidden sm:inline-block text-xs bg-cyan-950 text-neonCyan px-2 py-0.5 rounded border border-cyan-800">5-in-1 Suite</span>
+        </div>
+
+        <!-- Navigation Game Tabs -->
+        <nav class="flex items-center gap-1 overflow-x-auto max-w-full py-1 text-xs sm:text-sm font-semibold">
+            <button id="nav-hub" onclick="switchTab('hub')" class="nav-btn active-tab px-3 py-1.5 rounded-lg border border-transparent transition flex items-center gap-1 whitespace-nowrap">
+                🏠 Hub
+            </button>
+            <button id="nav-starfighter" onclick="switchTab('starfighter')" class="nav-btn px-3 py-1.5 rounded-lg border border-transparent hover:border-cyan-500/50 transition flex items-center gap-1 whitespace-nowrap">
+                🚀 Starfighter
+            </button>
+            <button id="nav-bistro" onclick="switchTab('bistro')" class="nav-btn px-3 py-1.5 rounded-lg border border-transparent hover:border-cyan-500/50 transition flex items-center gap-1 whitespace-nowrap">
+                🍔 Cyber Bistro
+            </button>
+            <button id="nav-pinball" onclick="switchTab('pinball')" class="nav-btn px-3 py-1.5 rounded-lg border border-transparent hover:border-cyan-500/50 transition flex items-center gap-1 whitespace-nowrap">
+                🕹️ Retro Pinball
+            </button>
+            <button id="nav-rogue" onclick="switchTab('rogue')" class="nav-btn px-3 py-1.5 rounded-lg border border-transparent hover:border-cyan-500/50 transition flex items-center gap-1 whitespace-nowrap">
+                🃏 Deck Rogue
+            </button>
+            <button id="nav-rhythm" onclick="switchTab('rhythm')" class="nav-btn px-3 py-1.5 rounded-lg border border-transparent hover:border-cyan-500/50 transition flex items-center gap-1 whitespace-nowrap">
+                🎵 Cyber Beat
+            </button>
+        </nav>
+
+        <!-- Global Control Buttons -->
+        <div class="flex items-center gap-2">
+            <button id="soundToggleBtn" onclick="toggleSound()" class="p-2 bg-slate-900 border border-slate-700 hover:border-neonCyan rounded-lg text-neonCyan text-sm transition" title="Toggle Sound FX">
+                🔊 Sound ON
+            </button>
+            <button onclick="openModal('scoresModal')" class="p-2 bg-slate-900 border border-slate-700 hover:border-neonPink rounded-lg text-neonPink text-sm transition" title="High Scores">
+                🏆 High Scores
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-2 sm:p-4 flex flex-col justify-center items-center relative">
+
+        <!-- HUB VIEW -->
+        <section id="view-hub" class="w-full space-y-6 py-4">
+            <!-- Hero Banner -->
+            <div class="relative rounded-2xl bg-gradient-to-r from-purple-950/80 via-slate-900 to-cyan-950/80 p-6 sm:p-10 border border-cyan-500/30 overflow-hidden text-center shadow-2xl">
+                <div class="relative z-10 max-w-2xl mx-auto space-y-3">
+                    <h1 class="font-orbitron text-3xl sm:text-5xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-neonCyan via-pink-400 to-neonYellow">
+                        SELECT YOUR CHALLENGE
+                    </h1>
+                    <p class="text-slate-300 text-sm sm:text-base font-medium">
+                        Experience 5 fully-featured retro-futuristic arcade titles built with rich audio FX, instant touch/keyboard controls, and high-score tracking!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Game Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                
+                <!-- Game 1 Card -->
+                <div onclick="switchTab('starfighter')" class="group cursor-pointer bg-slate-900/80 hover:bg-slate-800/90 border border-cyan-500/30 hover:border-neonCyan rounded-xl p-5 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/10 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-3xl">🚀</span>
+                            <span class="text-xs px-2 py-1 bg-cyan-950 text-neonCyan border border-cyan-800 rounded font-mono">ARCADE SHOOTER</span>
+                        </div>
+                        <h2 class="font-orbitron font-bold text-xl text-white group-hover:text-neonCyan transition">Starfighter Neon</h2>
+                        <p class="text-slate-400 text-xs mt-2 leading-relaxed">
+                            Blast through enemy waves, pick up laser upgrades, trigger shields, and conquer galactic mega-bosses!
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
+                        <span class="text-slate-500">Best Score: <span id="hub-score-starfighter" class="text-neonCyan font-mono">0</span></span>
+                        <span class="text-neonCyan font-bold group-hover:translate-x-1 transition flex items-center gap-1">PLAY &rarr;</span>
+                    </div>
+                </div>
+
+                <!-- Game 2 Card -->
+                <div onclick="switchTab('bistro')" class="group cursor-pointer bg-slate-900/80 hover:bg-slate-800/90 border border-pink-500/30 hover:border-neonPink rounded-xl p-5 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:shadow-pink-500/10 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-3xl">🍔</span>
+                            <span class="text-xs px-2 py-1 bg-pink-950 text-neonPink border border-pink-800 rounded font-mono">MANAGEMENT SIM</span>
+                        </div>
+                        <h2 class="font-orbitron font-bold text-xl text-white group-hover:text-neonPink transition">Cyber Bistro Tycoon</h2>
+                        <p class="text-slate-400 text-xs mt-2 leading-relaxed">
+                            Assemble futuristic multi-ingredient recipes, manage food inventory, upgrade kitchen equipment, and hit daily profits!
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
+                        <span class="text-slate-500">Best Revenue: <span id="hub-score-bistro" class="text-neonPink font-mono">$0</span></span>
+                        <span class="text-neonPink font-bold group-hover:translate-x-1 transition flex items-center gap-1">PLAY &rarr;</span>
+                    </div>
+                </div>
+
+                <!-- Game 3 Card -->
+                <div onclick="switchTab('pinball')" class="group cursor-pointer bg-slate-900/80 hover:bg-slate-800/90 border border-yellow-500/30 hover:border-neonYellow rounded-xl p-5 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:shadow-yellow-500/10 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-3xl">🕹️</span>
+                            <span class="text-xs px-2 py-1 bg-yellow-950 text-neonYellow border border-yellow-800 rounded font-mono">PHYSICS / SPORTS</span>
+                        </div>
+                        <h2 class="font-orbitron font-bold text-xl text-white group-hover:text-neonYellow transition">Retro Pinball FX</h2>
+                        <p class="text-slate-400 text-xs mt-2 leading-relaxed">
+                            Spring the plunger, control dual responsive flippers, strike high-score bumpers, and trigger insane combo multipliers!
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
+                        <span class="text-slate-500">Best Score: <span id="hub-score-pinball" class="text-neonYellow font-mono">0</span></span>
+                        <span class="text-neonYellow font-bold group-hover:translate-x-1 transition flex items-center gap-1">PLAY &rarr;</span>
+                    </div>
+                </div>
+
+                <!-- Game 4 Card -->
+                <div onclick="switchTab('rogue')" class="group cursor-pointer bg-slate-900/80 hover:bg-slate-800/90 border border-purple-500/30 hover:border-neonPurple rounded-xl p-5 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-500/10 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-3xl">🃏</span>
+                            <span class="text-xs px-2 py-1 bg-purple-950 text-neonPurple border border-purple-800 rounded font-mono">CARD ROGUELIKE</span>
+                        </div>
+                        <h2 class="font-orbitron font-bold text-xl text-white group-hover:text-neonPurple transition">Monster Deck Rogue</h2>
+                        <p class="text-slate-400 text-xs mt-2 leading-relaxed">
+                            Tactical turn-based card battler. Read enemy intent, balance attack & block, build your custom deck, and slay cyber bosses!
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
+                        <span class="text-slate-500">Max Wins: <span id="hub-score-rogue" class="text-neonPurple font-mono">0 Wins</span></span>
+                        <span class="text-neonPurple font-bold group-hover:translate-x-1 transition flex items-center gap-1">PLAY &rarr;</span>
+                    </div>
+                </div>
+
+                <!-- Game 5 Card -->
+                <div onclick="switchTab('rhythm')" class="group cursor-pointer bg-slate-900/80 hover:bg-slate-800/90 border border-green-500/30 hover:border-neonGreen rounded-xl p-5 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:shadow-green-500/10 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-3xl">🎵</span>
+                            <span class="text-xs px-2 py-1 bg-green-950 text-neonGreen border border-green-800 rounded font-mono">RHYTHM / ACTION</span>
+                        </div>
+                        <h2 class="font-orbitron font-bold text-xl text-white group-hover:text-neonGreen transition">Cyber Beat Express</h2>
+                        <p class="text-slate-400 text-xs mt-2 leading-relaxed">
+                            Match falling synth notes in a 4-lane track with precision timing. Build massive combos across multiple tempo levels!
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
+                        <span class="text-slate-500">High Combo: <span id="hub-score-rhythm" class="text-neonGreen font-mono">0x</span></span>
+                        <span class="text-neonGreen font-bold group-hover:translate-x-1 transition flex items-center gap-1">PLAY &rarr;</span>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- GAME 1 VIEW: STARFIGHTER NEON -->
+        <section id="view-starfighter" class="w-full hidden flex-col items-center max-w-3xl">
+            <div class="w-full bg-slate-900/90 p-3 rounded-t-xl border border-cyan-500/30 flex justify-between items-center flex-wrap gap-2">
+                <div class="flex items-center gap-4 text-xs sm:text-sm font-mono">
+                    <div>SCORE: <span id="sf-score" class="text-neonCyan font-bold text-base">0</span></div>
+                    <div>SHIELD: <span id="sf-shield" class="text-neonPink font-bold text-base">100%</span></div>
+                    <div>WAVE: <span id="sf-wave" class="text-neonYellow font-bold text-base">1</span></div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="initStarfighter()" class="px-3 py-1 bg-cyan-900/80 hover:bg-cyan-800 border border-cyan-500 text-neonCyan text-xs rounded font-bold transition">
+                        🔄 Restart
+                    </button>
+                </div>
+            </div>
+            <div class="arcade-screen w-full flex justify-center items-center bg-black relative">
+                <canvas id="canvas-starfighter" width="600" height="550" class="max-w-full h-auto rounded-b-xl"></canvas>
+                <!-- On-Screen Controls Overlay for Touch Devices -->
+                <div class="absolute bottom-2 left-2 right-2 flex justify-between items-center md:hidden pointer-events-none">
+                    <div class="flex gap-1 pointer-events-auto">
+                        <button id="sf-btn-left" class="w-12 h-12 bg-slate-800/80 border border-cyan-500/50 rounded-full text-neonCyan text-lg font-bold flex items-center justify-center active:bg-cyan-600">◀</button>
+                        <button id="sf-btn-right" class="w-12 h-12 bg-slate-800/80 border border-cyan-500/50 rounded-full text-neonCyan text-lg font-bold flex items-center justify-center active:bg-cyan-600">▶</button>
+                    </div>
+                    <div class="pointer-events-auto">
+                        <button id="sf-btn-fire" class="w-14 h-14 bg-pink-900/80 border border-neonPink rounded-full text-white text-xs font-bold active:bg-pink-600 shadow-lg">FIRE</button>
+                    </div>
+                </div>
+            </div>
+            <p class="text-slate-400 text-xs mt-2 text-center">Controls: Arrow Keys / WASD + Spacebar to Shoot | Touch Controls available on screen</p>
+        </section>
+
+        <!-- GAME 2 VIEW: CYBER BISTRO TYCOON -->
+        <section id="view-bistro" class="w-full hidden flex-col items-center max-w-4xl">
+            <div class="w-full bg-slate-900 p-4 rounded-xl border border-pink-500/30 space-y-4">
+                <!-- Top Status Bar -->
+                <div class="flex justify-between items-center flex-wrap gap-2 bg-slate-950 p-3 rounded-lg border border-slate-800 font-mono text-sm">
+                    <div>DAY REVENUE: <span id="bistro-money" class="text-neonGreen font-bold text-lg">$0</span></div>
+                    <div>GOAL: <span id="bistro-goal" class="text-neonYellow font-bold text-lg">$150</span></div>
+                    <div>TIME: <span id="bistro-timer" class="text-neonPink font-bold text-lg">60s</span></div>
+                    <div>DAY: <span id="bistro-day" class="text-neonCyan font-bold text-lg">1</span></div>
+                </div>
+
+                <!-- Cooking & Serving Layout Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Customer Queue Column -->
+                    <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 flex flex-col justify-between min-h-[220px]">
+                        <h3 class="font-orbitron font-bold text-xs text-neonPink border-b border-pink-900/50 pb-1">CUSTOMER ORDERS</h3>
+                        <div id="bistro-customers" class="space-y-2 my-2 overflow-y-auto max-h-[200px]">
+                            <!-- Customer order cards injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Prep Table / Current Assembly Column -->
+                    <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-orbitron font-bold text-xs text-neonCyan border-b border-cyan-900/50 pb-1">PREPARATION TRAY</h3>
+                            <div id="bistro-tray" class="min-h-[80px] my-3 bg-slate-900/80 rounded-lg border border-dashed border-cyan-500/40 p-2 flex flex-wrap gap-2 items-center justify-center">
+                                <span class="text-xs text-slate-500 italic">Select ingredients to build order...</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="bistroServeOrder()" class="flex-1 py-2 bg-neonPink hover:bg-pink-600 text-black font-orbitron font-bold text-xs rounded transition shadow-lg shadow-pink-500/20">
+                                🔔 SERVE DISH
+                            </button>
+                            <button onclick="bistroClearTray()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded border border-slate-600 transition">
+                                🗑️ Clear
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Upgrades & Market Column -->
+                    <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 flex flex-col justify-between">
+                        <h3 class="font-orbitron font-bold text-xs text-neonYellow border-b border-yellow-900/50 pb-1">BISTRO UPGRADES</h3>
+                        <div class="space-y-2 my-2 text-xs">
+                            <button onclick="bistroBuyUpgrade('prep')" id="bistro-upg-prep" class="w-full text-left p-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded flex justify-between items-center">
+                                <span>⚡ Auto Chef Assistant</span>
+                                <span class="text-neonGreen font-mono">$50</span>
+                            </button>
+                            <button onclick="bistroBuyUpgrade('tips')" id="bistro-upg-tips" class="w-full text-left p-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded flex justify-between items-center">
+                                💎 Neon Glow Decor (+Tips)
+                            </button>
+                        </div>
+                        <button id="bistro-start-btn" onclick="bistroStartDay()" class="w-full py-2 bg-neonGreen hover:bg-green-500 text-black font-orbitron font-bold text-sm rounded shadow-lg shadow-green-500/20 transition">
+                            ▶ START DAY
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Ingredient Selector Panel -->
+                <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                    <h3 class="font-orbitron font-bold text-xs text-slate-400 mb-2">INGREDIENT DISPENSER</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                        <button onclick="bistroAddIngredient('Bun')" class="p-2 bg-slate-900 hover:bg-slate-800 border border-yellow-700/50 hover:border-neonYellow rounded text-xs flex flex-col items-center gap-1 transition">
+                            <span class="text-xl">🍞</span>
+                            <span class="font-bold text-slate-200">Cyber Bun</span>
+                        </button>
+                        <button onclick="bistroAddIngredient('Patty')" class="p-2 bg-slate-900 hover:bg-slate-800 border border-red-700/50 hover:border-red-400 rounded text-xs flex flex-col items-center gap-1 transition">
+                            <span class="text-xl">🥩</span>
+                            <span class="font-bold text-slate-200">Neon Beef</span>
+                        </button>
+                        <button onclick="bistroAddIngredient('Cheese')" class="p-2 bg-slate-900 hover:bg-slate-800 border border-yellow-500/50 hover:border-yellow-300 rounded text-xs flex flex-col items-center gap-1 transition">
+                            <span class="text-xl">🧀</span>
+                            <span class="font-bold text-slate-200">Tech Cheese</span>
+                        </button>
+                        <button onclick="bistroAddIngredient('Lettuce')" class="p-2 bg-slate-900 hover:bg-slate-800 border border-green-700/50 hover:border-green-400 rounded text-xs flex flex-col items-center gap-1 transition">
+                            <span class="text-xl">🥬</span>
+                            <span class="font-bold text-slate-200">Bio Greens</span>
+                        </button>
+                        <button onclick="bistroAddIngredient('Salsa')" class="p-2 bg-slate-900 hover:bg-slate-800 border border-pink-700/50 hover:border-pink-400 rounded text-xs flex flex-col items-center gap-1 transition">
+                            <span class="text-xl">🥫</span>
+                            <span class="font-bold text-slate-200">Cyber Sauce</span>
+                        </button>
+                        <button onclick="bistroAddIngredient('Boba')" class="p-2 bg-slate-900 hover:bg-slate-800 border border-cyan-700/50 hover:border-cyan-400 rounded text-xs flex flex-col items-center gap-1 transition">
+                            <span class="text-xl">🧋</span>
+                            <span class="font-bold text-slate-200">Synth Tea</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- GAME 3 VIEW: RETRO PINBALL FX -->
+        <section id="view-pinball" class="w-full hidden flex-col items-center max-w-2xl">
+            <div class="w-full bg-slate-900/90 p-3 rounded-t-xl border border-yellow-500/30 flex justify-between items-center font-mono text-xs sm:text-sm">
+                <div>SCORE: <span id="pinball-score" class="text-neonYellow font-bold text-lg">0</span></div>
+                <div>BALLS: <span id="pinball-balls" class="text-neonCyan font-bold text-lg">3</span></div>
+                <div>MULTIPLIER: <span id="pinball-mult" class="text-neonPink font-bold text-lg">1x</span></div>
+                <button onclick="initPinball()" class="px-3 py-1 bg-yellow-900/80 hover:bg-yellow-800 border border-yellow-500 text-neonYellow rounded font-bold transition">
+                    🔄 Launch Ball
+                </button>
+            </div>
+            <div class="arcade-screen w-full flex justify-center items-center bg-black relative">
+                <canvas id="canvas-pinball" width="480" height="600" class="max-w-full h-auto rounded-b-xl"></canvas>
+            </div>
+            <!-- Touch Flipper Controls -->
+            <div class="w-full grid grid-cols-2 gap-2 mt-3 md:hidden">
+                <button id="pb-btn-left" class="py-4 bg-slate-800 border-2 border-yellow-500 rounded-xl text-neonYellow font-orbitron font-bold text-lg active:bg-yellow-600">LEFT FLIPPER</button>
+                <button id="pb-btn-right" class="py-4 bg-slate-800 border-2 border-yellow-500 rounded-xl text-neonYellow font-orbitron font-bold text-lg active:bg-yellow-600">RIGHT FLIPPER</button>
+            </div>
+            <p class="text-slate-400 text-xs mt-2 text-center">Controls: Z or Left Arrow = Left Flipper | / or Right Arrow = Right Flipper | Space = Launch Plunger</p>
+        </section>
+
+        <!-- GAME 4 VIEW: MONSTER DECK ROGUE -->
+        <section id="view-rogue" class="w-full hidden flex-col items-center max-w-3xl">
+            <div class="w-full bg-slate-900 p-4 rounded-xl border border-purple-500/30 space-y-4">
+                <!-- Encounter Banner -->
+                <div class="flex justify-between items-center bg-slate-950 p-3 rounded-lg border border-purple-900/50">
+                    <div>
+                        <span id="rogue-stage" class="text-xs font-mono text-neonPurple uppercase">Stage 1 - Cyber Slime</span>
+                        <h3 id="rogue-title" class="font-orbitron font-bold text-lg text-white">BATTLE ENTERED</h3>
+                    </div>
+                    <div class="text-right font-mono text-xs">
+                        <div>WINS: <span id="rogue-wins" class="text-neonGreen font-bold text-sm">0</span></div>
+                    </div>
+                </div>
+
+                <!-- Battle Field (Enemy & Player Arena) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-2">
+                    <!-- Enemy Card View -->
+                    <div class="bg-slate-950 p-4 rounded-xl border border-red-900/50 flex flex-col items-center justify-center space-y-2 relative overflow-hidden">
+                        <div id="rogue-enemy-intent" class="absolute top-2 right-2 px-2 py-0.5 bg-red-950 text-red-400 border border-red-800 rounded text-xs font-mono">
+                            Intent: Attack 8
+                        </div>
+                        <div id="rogue-enemy-sprite" class="text-6xl my-2 transform hover:scale-110 transition duration-300">👾</div>
+                        <h4 id="rogue-enemy-name" class="font-orbitron font-bold text-red-400 text-sm">CYBER GLITCH</h4>
+                        <!-- HP Bar -->
+                        <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden border border-slate-700">
+                            <div id="rogue-enemy-hp-bar" class="bg-gradient-to-r from-red-600 to-pink-500 h-full w-full transition-all duration-300"></div>
+                        </div>
+                        <span id="rogue-enemy-hp-text" class="text-xs font-mono text-slate-300">HP: 40 / 40</span>
+                    </div>
+
+                    <!-- Player Card View -->
+                    <div class="bg-slate-950 p-4 rounded-xl border border-cyan-900/50 flex flex-col items-center justify-center space-y-2 relative">
+                        <div class="text-5xl my-2">🤖</div>
+                        <h4 class="font-orbitron font-bold text-neonCyan text-sm">CYBER KNIGHT</h4>
+                        <!-- HP & Shield Bar -->
+                        <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden border border-slate-700">
+                            <div id="rogue-player-hp-bar" class="bg-gradient-to-r from-neonCyan to-green-400 h-full w-full transition-all duration-300"></div>
+                        </div>
+                        <div class="flex justify-between w-full text-xs font-mono">
+                            <span id="rogue-player-hp-text" class="text-slate-300">HP: 50 / 50</span>
+                            <span id="rogue-player-block" class="text-neonCyan font-bold">🛡️ Shield: 0</span>
+                        </div>
+                        <div id="rogue-player-energy" class="px-3 py-1 bg-purple-950 border border-purple-600 rounded-full text-neonPurple font-bold text-xs">
+                            ⚡ Energy: 3 / 3
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Player Hand Cards -->
+                <div>
+                    <div class="flex justify-between items-center mb-2 text-xs font-orbitron">
+                        <span class="text-slate-400">YOUR HAND</span>
+                        <button onclick="rogueEndTurn()" class="px-4 py-1.5 bg-neonPurple hover:bg-purple-600 text-black font-bold rounded shadow-lg shadow-purple-500/20 transition">
+                            END TURN ⌛
+                        </button>
+                    </div>
+                    <div id="rogue-hand" class="grid grid-cols-2 sm:grid-cols-4 gap-2 min-h-[120px]">
+                        <!-- Cards injected via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- GAME 5 VIEW: CYBER BEAT EXPRESS -->
+        <section id="view-rhythm" class="w-full hidden flex-col items-center max-w-xl">
+            <div class="w-full bg-slate-900/90 p-3 rounded-t-xl border border-green-500/30 flex justify-between items-center font-mono text-xs sm:text-sm">
+                <div>SCORE: <span id="rhythm-score" class="text-neonGreen font-bold text-lg">0</span></div>
+                <div>COMBO: <span id="rhythm-combo" class="text-neonCyan font-bold text-lg">0x</span></div>
+                <div>RATING: <span id="rhythm-grade" class="text-neonYellow font-bold text-base">READY</span></div>
+                <button onclick="initRhythm()" class="px-3 py-1 bg-green-900/80 hover:bg-green-800 border border-green-500 text-neonGreen rounded font-bold transition">
+                    🔄 Start Track
+                </button>
+            </div>
+            <div class="arcade-screen w-full flex justify-center items-center bg-black relative">
+                <canvas id="canvas-rhythm" width="400" height="520" class="max-w-full h-auto rounded-b-xl"></canvas>
+            </div>
+            <!-- Touch Pad Keys for Mobile -->
+            <div class="w-full grid grid-cols-4 gap-2 mt-3 md:hidden">
+                <button id="rh-btn-0" class="py-4 bg-slate-800 border border-cyan-500 rounded-lg text-neonCyan font-bold active:bg-cyan-500 active:text-black">D</button>
+                <button id="rh-btn-1" class="py-4 bg-slate-800 border border-pink-500 rounded-lg text-neonPink font-bold active:bg-pink-500 active:text-black">F</button>
+                <button id="rh-btn-2" class="py-4 bg-slate-800 border border-yellow-500 rounded-lg text-neonYellow font-bold active:bg-yellow-500 active:text-black">J</button>
+                <button id="rh-btn-3" class="py-4 bg-slate-800 border border-green-500 rounded-lg text-neonGreen font-bold active:bg-green-500 active:text-black">K</button>
+            </div>
+            <p class="text-slate-400 text-xs mt-2 text-center">Controls: Keys D, F, J, K or 1, 2, 3, 4 | Touch lanes on screen</p>
+        </section>
+
+    </main>
+
+    <!-- HIGH SCORES MODAL -->
+    <div id="scoresModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-neonCyan rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="font-orbitron font-bold text-xl text-neonCyan">HALL OF FAME 🏆</h3>
+                <button onclick="closeModal('scoresModal')" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+            </div>
+            <div class="space-y-3 font-mono text-sm">
+                <div class="flex justify-between p-2 bg-slate-950 rounded border border-slate-800">
+                    <span class="text-slate-300">🚀 Starfighter Neon</span>
+                    <span id="score-val-starfighter" class="text-neonCyan font-bold">0</span>
+                </div>
+                <div class="flex justify-between p-2 bg-slate-950 rounded border border-slate-800">
+                    <span class="text-slate-300">🍔 Cyber Bistro Tycoon</span>
+                    <span id="score-val-bistro" class="text-neonPink font-bold">$0</span>
+                </div>
+                <div class="flex justify-between p-2 bg-slate-950 rounded border border-slate-800">
+                    <span class="text-slate-300">🕹️ Retro Pinball FX</span>
+                    <span id="score-val-pinball" class="text-neonYellow font-bold">0</span>
+                </div>
+                <div class="flex justify-between p-2 bg-slate-950 rounded border border-slate-800">
+                    <span class="text-slate-300">🃏 Monster Deck Rogue</span>
+                    <span id="score-val-rogue" class="text-neonPurple font-bold">0 Wins</span>
+                </div>
+                <div class="flex justify-between p-2 bg-slate-950 rounded border border-slate-800">
+                    <span class="text-slate-300">🎵 Cyber Beat Express</span>
+                    <span id="score-val-rhythm" class="text-neonGreen font-bold">0x Streak</span>
+                </div>
+            </div>
+            <div class="flex justify-between gap-3 pt-2">
+                <button onclick="resetScores()" class="px-4 py-2 bg-red-950 hover:bg-red-900 text-red-400 border border-red-800 rounded text-xs transition">
+                    Reset Scores
+                </button>
+                <button onclick="closeModal('scoresModal')" class="px-5 py-2 bg-neonCyan hover:bg-cyan-400 text-black font-bold rounded text-xs transition">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- SOUND FX SYNTHESIZER (WEB AUDIO API) ---
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) audioCtx = new AudioContext();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'laser') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'explosion') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(30, now + 0.3);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'bell') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(987.77, now); // B5
+                    osc.frequency.setValueAtTime(1318.51, now + 0.1); // E6
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } else if (type === 'flipper') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(600, now + 0.08);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'bumper') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(500, now);
+                    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.12);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } else if (type === 'card') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.linearRampToValueAtTime(600, now + 0.08);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'hitNote') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                }
+            } catch(e) {}
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('soundToggleBtn');
+            btn.innerHTML = soundEnabled ? '🔊 Sound ON' : '🔇 Sound OFF';
+        }
+
+        // --- NAVIGATION SYSTEM ---
+        let currentTab = 'hub';
+
+        function switchTab(tab) {
+            currentTab = tab;
+            initAudio();
+
+            // Hide all views
+            ['hub', 'starfighter', 'bistro', 'pinball', 'rogue', 'rhythm'].forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if (el) {
+                    el.classList.add('hidden');
+                    el.classList.remove('flex');
+                }
+                const nav = document.getElementById(`nav-${v}`);
+                if (nav) nav.classList.remove('active-tab');
+            });
+
+            // Show target view
+            const targetEl = document.getElementById(`view-${tab}`);
+            if (targetEl) {
+                targetEl.classList.remove('hidden');
+                targetEl.classList.add('flex');
+            }
+            const targetNav = document.getElementById(`nav-${tab}`);
+            if (targetNav) targetNav.classList.add('active-tab');
+
+            // Trigger individual game loop / resets when tab is switched
+            if (tab === 'starfighter') initStarfighter();
+            if (tab === 'bistro') initBistro();
+            if (tab === 'pinball') initPinball();
+            if (tab === 'rogue') initRogue();
+            if (tab === 'rhythm') initRhythm();
+            
+            updateScoresUI();
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // --- LOCALSTORAGE SCORES ---
+        const scores = {
+            starfighter: parseInt(localStorage.getItem('score_sf') || '0'),
+            bistro: parseInt(localStorage.getItem('score_bistro') || '0'),
+            pinball: parseInt(localStorage.getItem('score_pinball') || '0'),
+            rogue: parseInt(localStorage.getItem('score_rogue') || '0'),
+            rhythm: parseInt(localStorage.getItem('score_rhythm') || '0')
+        };
+
+        function saveScore(key, val) {
+            if (val > scores[key]) {
+                scores[key] = val;
+                localStorage.setItem(`score_${key}`, val);
+                updateScoresUI();
+            }
+        }
+
+        function updateScoresUI() {
+            document.getElementById('hub-score-starfighter').innerText = scores.starfighter;
+            document.getElementById('score-val-starfighter').innerText = scores.starfighter;
+
+            document.getElementById('hub-score-bistro').innerText = `$${scores.bistro}`;
+            document.getElementById('score-val-bistro').innerText = `$${scores.bistro}`;
+
+            document.getElementById('hub-score-pinball').innerText = scores.pinball;
+            document.getElementById('score-val-pinball').innerText = scores.pinball;
+
+            document.getElementById('hub-score-rogue').innerText = `${scores.rogue} Wins`;
+            document.getElementById('score-val-rogue').innerText = `${scores.rogue} Wins`;
+
+            document.getElementById('hub-score-rhythm').innerText = `${scores.rhythm}x`;
+            document.getElementById('score-val-rhythm').innerText = `${scores.rhythm}x Streak`;
+        }
+
+        function resetScores() {
+            Object.keys(scores).forEach(k => {
+                scores[k] = 0;
+                localStorage.removeItem(`score_${k}`);
+            });
+            updateScoresUI();
+        }
+
+        // ==========================================
+        // GAME 1: STARFIGHTER NEON (SHOOT 'EM UP)
+        // ==========================================
+        let sfCanvas, sfCtx;
+        let sfLoop = null;
+        let sfPlayer = { x: 280, y: 480, w: 36, h: 36, speed: 6, shield: 100 };
+        let sfBullets = [], sfEnemies = [], sfParticles = [], sfStars = [];
+        let sfScore = 0, sfWave = 1, sfKeys = {};
+
+        function initStarfighter() {
+            sfCanvas = document.getElementById('canvas-starfighter');
+            sfCtx = sfCanvas.getContext('2d');
+            
+            sfPlayer = { x: sfCanvas.width/2 - 18, y: sfCanvas.height - 60, w: 36, h: 36, speed: 6, shield: 100 };
+            sfBullets = [];
+            sfEnemies = [];
+            sfParticles = [];
+            sfScore = 0;
+            sfWave = 1;
+
+            // Generate starfield background
+            sfStars = [];
+            for (let i = 0; i < 80; i++) {
+                sfStars.push({
+                    x: Math.random() * sfCanvas.width,
+                    y: Math.random() * sfCanvas.height,
+                    size: Math.random() * 2 + 1,
+                    speed: Math.random() * 2 + 0.5
+                });
+            }
+
+            // Spawn initial enemies
+            spawnSfEnemies();
+
+            if (sfLoop) cancelAnimationFrame(sfLoop);
+            sfGameLoop();
+        }
+
+        function spawnSfEnemies() {
+            const count = 5 + sfWave * 2;
+            for (let i = 0; i < count; i++) {
+                sfEnemies.push({
+                    x: Math.random() * (sfCanvas.width - 40) + 20,
+                    y: -Math.random() * 300 - 30,
+                    w: 30, h: 30,
+                    hp: 1 + Math.floor(sfWave / 2),
+                    speed: Math.random() * 1.5 + 1.2 + sfWave * 0.2,
+                    color: i % 2 === 0 ? '#ff007f' : '#00f3ff'
+                });
+            }
+        }
+
+        function sfGameLoop() {
+            if (currentTab !== 'starfighter') return;
+
+            // Updates
+            // Stars
+            sfStars.forEach(s => {
+                s.y += s.speed;
+                if (s.y > sfCanvas.height) { s.y = 0; s.x = Math.random() * sfCanvas.width; }
+            });
+
+            // Player controls
+            if ((sfKeys['ArrowLeft'] || sfKeys['KeyA']) && sfPlayer.x > 0) sfPlayer.x -= sfPlayer.speed;
+            if ((sfKeys['ArrowRight'] || sfKeys['KeyD']) && sfPlayer.x < sfCanvas.width - sfPlayer.w) sfPlayer.x += sfPlayer.speed;
+            if (sfKeys['Space'] && Math.random() < 0.2) {
+                sfBullets.push({ x: sfPlayer.x + sfPlayer.w/2 - 3, y: sfPlayer.y, w: 6, h: 14, speed: 10 });
+                playSound('laser');
+            }
+
+            // Bullets
+            sfBullets.forEach((b, bi) => {
+                b.y -= b.speed;
+                if (b.y < -20) sfBullets.splice(bi, 1);
+            });
+
+            // Enemies
+            sfEnemies.forEach((e, ei) => {
+                e.y += e.speed;
+
+                // Collision with player
+                if (e.x < sfPlayer.x + sfPlayer.w && e.x + e.w > sfPlayer.x &&
+                    e.y < sfPlayer.y + sfPlayer.h && e.y + e.h > sfPlayer.y) {
+                    sfPlayer.shield -= 20;
+                    playSound('explosion');
+                    createSfParticles(e.x, e.y, '#ff007f');
+                    sfEnemies.splice(ei, 1);
+                    if (sfPlayer.shield <= 0) {
+                        saveScore('starfighter', sfScore);
+                        alert(`Game Over! Final Score: ${sfScore}`);
+                        initStarfighter();
+                    }
+                }
+
+                // Bullet hit enemy
+                sfBullets.forEach((b, bi) => {
+                    if (b.x < e.x + e.w && b.x + b.w > e.x && b.y < e.y + e.h && b.y + b.h > e.y) {
+                        e.hp--;
+                        sfBullets.splice(bi, 1);
+                        if (e.hp <= 0) {
+                            sfScore += 100;
+                            playSound('explosion');
+                            createSfParticles(e.x, e.y, e.color);
+                            sfEnemies.splice(ei, 1);
+                        }
+                    }
+                });
+
+                if (e.y > sfCanvas.height + 40) sfEnemies.splice(ei, 1);
+            });
+
+            // Wave clearance
+            if (sfEnemies.length === 0) {
+                sfWave++;
+                spawnSfEnemies();
+            }
+
+            // Update UI elements
+            document.getElementById('sf-score').innerText = sfScore;
+            document.getElementById('sf-shield').innerText = `${Math.max(0, sfPlayer.shield)}%`;
+            document.getElementById('sf-wave').innerText = sfWave;
+
+            // RENDER
+            sfCtx.fillStyle = '#060812';
+            sfCtx.fillRect(0, 0, sfCanvas.width, sfCanvas.height);
+
+            // Render Stars
+            sfCtx.fillStyle = '#ffffff';
+            sfStars.forEach(s => sfCtx.fillRect(s.x, s.y, s.size, s.size));
+
+            // Render Bullets
+            sfCtx.fillStyle = '#00f3ff';
+            sfBullets.forEach(b => {
+                sfCtx.shadowBlur = 10;
+                sfCtx.shadowColor = '#00f3ff';
+                sfCtx.fillRect(b.x, b.y, b.w, b.h);
+            });
+            sfCtx.shadowBlur = 0;
+
+            // Render Enemies
+            sfEnemies.forEach(e => {
+                sfCtx.fillStyle = e.color;
+                sfCtx.shadowBlur = 10;
+                sfCtx.shadowColor = e.color;
+                sfCtx.beginPath();
+                sfCtx.moveTo(e.x + e.w/2, e.y + e.h);
+                sfCtx.lineTo(e.x, e.y);
+                sfCtx.lineTo(e.x + e.w, e.y);
+                sfCtx.closePath();
+                sfCtx.fill();
+            });
+            sfCtx.shadowBlur = 0;
+
+            // Render Player Ship
+            sfCtx.fillStyle = '#00f3ff';
+            sfCtx.shadowBlur = 12;
+            sfCtx.shadowColor = '#00f3ff';
+            sfCtx.beginPath();
+            sfCtx.moveTo(sfPlayer.x + sfPlayer.w/2, sfPlayer.y);
+            sfCtx.lineTo(sfPlayer.x, sfPlayer.y + sfPlayer.h);
+            sfCtx.lineTo(sfPlayer.x + sfPlayer.w/2, sfPlayer.y + sfPlayer.h - 8);
+            sfCtx.lineTo(sfPlayer.x + sfPlayer.w, sfPlayer.y + sfPlayer.h);
+            sfCtx.closePath();
+            sfCtx.fill();
+            sfCtx.shadowBlur = 0;
+
+            // Render Particles
+            sfParticles.forEach((p, pi) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.05;
+                sfCtx.fillStyle = p.color;
+                sfCtx.globalAlpha = Math.max(0, p.life);
+                sfCtx.fillRect(p.x, p.y, p.size, p.size);
+                sfCtx.globalAlpha = 1.0;
+                if (p.life <= 0) sfParticles.splice(pi, 1);
+            });
+
+            sfLoop = requestAnimationFrame(sfGameLoop);
+        }
+
+        function createSfParticles(x, y, color) {
+            for (let i = 0; i < 15; i++) {
+                sfParticles.push({
+                    x, y,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6,
+                    size: Math.random() * 3 + 2,
+                    life: 1.0,
+                    color
+                });
+            }
+        }
+
+        // ==========================================
+        // GAME 2: CYBER BISTRO TYCOON
+        // ==========================================
+        let bistroMoney = 0, bistroGoal = 150, bistroTime = 60, bistroDay = 1;
+        let bistroCustomers = [], bistroTray = [];
+        let bistroTimerInterval = null;
+        let bistroUpgradePrep = false, bistroUpgradeTips = false;
+
+        const bistroMenu = [
+            { name: 'Cyber Burger', ingredients: ['Bun', 'Patty', 'Cheese'], price: 35 },
+            { name: 'Tech Taco', ingredients: ['Bun', 'Patty', 'Salsa', 'Cheese'], price: 45 },
+            { name: 'Boba Synth', ingredients: ['Boba', 'Lettuce'], price: 25 },
+            { name: 'Bio Salad', ingredients: ['Lettuce', 'Salsa', 'Cheese'], price: 30 }
+        ];
+
+        function initBistro() {
+            bistroMoney = 0;
+            bistroGoal = 150;
+            bistroTime = 60;
+            bistroDay = 1;
+            bistroCustomers = [];
+            bistroTray = [];
+            updateBistroUI();
+        }
+
+        function bistroStartDay() {
+            if (bistroTimerInterval) clearInterval(bistroTimerInterval);
+            bistroCustomers = [];
+            bistroTray = [];
+            bistroTime = 60;
+            
+            // Spawn initial customers
+            bistroSpawnCustomer();
+            bistroSpawnCustomer();
+
+            bistroTimerInterval = setInterval(() => {
+                bistroTime--;
+                if (Math.random() < 0.3 && bistroCustomers.length < 3) {
+                    bistroSpawnCustomer();
+                }
+                
+                // Customer timer patience decrease
+                bistroCustomers.forEach((c, ci) => {
+                    c.patience -= 2;
+                    if (c.patience <= 0) {
+                        bistroCustomers.splice(ci, 1);
+                    }
+                });
+
+                if (bistroTime <= 0) {
+                    clearInterval(bistroTimerInterval);
+                    saveScore('bistro', bistroMoney);
+                    if (bistroMoney >= bistroGoal) {
+                        alert(`Day ${bistroDay} Completed! Profit Goal Reached!`);
+                        bistroDay++;
+                        bistroGoal += 100;
+                    } else {
+                        alert(`Day ${bistroDay} Failed! Did not hit $${bistroGoal} goal.`);
+                        initBistro();
+                    }
+                }
+                updateBistroUI();
+            }, 1000);
+        }
+
+        function bistroSpawnCustomer() {
+            const recipe = bistroMenu[Math.floor(Math.random() * bistroMenu.length)];
+            bistroCustomers.push({
+                id: Date.now() + Math.random(),
+                recipe: recipe,
+                patience: 100
+            });
+            updateBistroUI();
+        }
+
+        function bistroAddIngredient(ing) {
+            if (bistroTray.length < 5) {
+                bistroTray.push(ing);
+                playSound('card');
+                updateBistroUI();
+            }
+        }
+
+        function bistroClearTray() {
+            bistroTray = [];
+            updateBistroUI();
+        }
+
+        function bistroServeOrder() {
+            if (bistroCustomers.length === 0 || bistroTray.length === 0) return;
+
+            let served = false;
+            bistroCustomers.forEach((c, ci) => {
+                if (!served && isSameIngredients(c.recipe.ingredients, bistroTray)) {
+                    let tip = bistroUpgradeTips ? 15 : 0;
+                    bistroMoney += c.recipe.price + tip;
+                    playSound('bell');
+                    bistroCustomers.splice(ci, 1);
+                    bistroTray = [];
+                    served = true;
+                }
+            });
+
+            if (!served) {
+                playSound('hitNote');
+                bistroTray = [];
+            }
+            updateBistroUI();
+        }
+
+        function isSameIngredients(arr1, arr2) {
+            if (arr1.length !== arr2.length) return false;
+            let s1 = [...arr1].sort();
+            let s2 = [...arr2].sort();
+            return s1.every((val, index) => val === s2[index]);
+        }
+
+        function bistroBuyUpgrade(type) {
+            if (type === 'prep' && bistroMoney >= 50 && !bistroUpgradePrep) {
+                bistroMoney -= 50;
+                bistroUpgradePrep = true;
+                document.getElementById('bistro-upg-prep').innerText = '⚡ Auto Assistant (ACTIVE)';
+            } else if (type === 'tips' && bistroMoney >= 75 && !bistroUpgradeTips) {
+                bistroMoney -= 75;
+                bistroUpgradeTips = true;
+                document.getElementById('bistro-upg-tips').innerText = '💎 Neon Decor (ACTIVE)';
+            }
+            updateBistroUI();
+        }
+
+        function updateBistroUI() {
+            document.getElementById('bistro-money').innerText = `$${bistroMoney}`;
+            document.getElementById('bistro-goal').innerText = `$${bistroGoal}`;
+            document.getElementById('bistro-timer').innerText = `${bistroTime}s`;
+            document.getElementById('bistro-day').innerText = bistroDay;
+
+            // Render Tray
+            const trayContainer = document.getElementById('bistro-tray');
+            if (bistroTray.length === 0) {
+                trayContainer.innerHTML = '<span class="text-xs text-slate-500 italic">Select ingredients to build order...</span>';
+            } else {
+                trayContainer.innerHTML = bistroTray.map(ing => `<span class="px-2 py-1 bg-cyan-950 text-neonCyan border border-cyan-700 rounded text-xs font-bold">${ing}</span>`).join('');
+            }
+
+            // Render Customers
+            const custContainer = document.getElementById('bistro-customers');
+            custContainer.innerHTML = bistroCustomers.map(c => `
+                <div class="bg-slate-900 border border-slate-700 p-2 rounded flex justify-between items-center text-xs">
+                    <div>
+                        <div class="font-bold text-neonPink">${c.recipe.name}</div>
+                        <div class="text-slate-400 text-[10px]">${c.recipe.ingredients.join(' + ')}</div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-neonGreen font-mono font-bold">$${c.recipe.price}</span>
+                        <div class="w-16 bg-slate-800 h-1.5 rounded-full mt-1 overflow-hidden">
+                            <div class="bg-neonPink h-full" style="width: ${c.patience}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ==========================================
+        // GAME 3: RETRO PINBALL FX
+        // ==========================================
+        let pbCanvas, pbCtx;
+        let pbLoop = null;
+        let pbBall = { x: 440, y: 500, vx: 0, vy: 0, radius: 8, active: false };
+        let pbLeftFlipperAngle = 0.3, pbRightFlipperAngle = -0.3;
+        let pbScore = 0, pbBalls = 3, pbMultiplier = 1;
+        let pbBumpers = [];
+
+        function initPinball() {
+            pbCanvas = document.getElementById('canvas-pinball');
+            pbCtx = pbCanvas.getContext('2d');
+            
+            pbScore = 0;
+            pbBalls = 3;
+            pbMultiplier = 1;
+            resetPbBall();
+
+            pbBumpers = [
+                { x: 160, y: 180, r: 24, glow: 0 },
+                { x: 320, y: 180, r: 24, glow: 0 },
+                { x: 240, y: 260, r: 28, glow: 0 }
+            ];
+
+            if (pbLoop) cancelAnimationFrame(pbLoop);
+            pbGameLoop();
+        }
+
+        function resetPbBall() {
+            pbBall = { x: 445, y: 520, vx: 0, vy: -14, radius: 8, active: true };
+            playSound('flipper');
+        }
+
+        function pbGameLoop() {
+            if (currentTab !== 'pinball') return;
+
+            // Physics Update
+            if (pbBall.active) {
+                pbBall.vy += 0.25; // Gravity
+                pbBall.x += pbBall.vx;
+                pbBall.y += pbBall.vy;
+
+                // Wall Collisions
+                if (pbBall.x - pbBall.radius < 20) { pbBall.x = 20 + pbBall.radius; pbBall.vx *= -0.8; }
+                if (pbBall.x + pbBall.radius > 460) { pbBall.x = 460 - pbBall.radius; pbBall.vx *= -0.8; }
+                if (pbBall.y - pbBall.radius < 20) { pbBall.y = 20 + pbBall.radius; pbBall.vy *= -0.8; }
+
+                // Bumper Collisions
+                pbBumpers.forEach(b => {
+                    let dx = pbBall.x - b.x;
+                    let dy = pbBall.y - b.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < pbBall.radius + b.r) {
+                        let angle = Math.atan2(dy, dx);
+                        pbBall.vx = Math.cos(angle) * 9;
+                        pbBall.vy = Math.sin(angle) * 9;
+                        pbScore += 150 * pbMultiplier;
+                        b.glow = 1.0;
+                        playSound('bumper');
+                    }
+                    if (b.glow > 0) b.glow -= 0.05;
+                });
+
+                // Drain Out
+                if (pbBall.y > pbCanvas.height) {
+                    pbBalls--;
+                    if (pbBalls > 0) {
+                        resetPbBall();
+                    } else {
+                        pbBall.active = false;
+                        saveScore('pinball', pbScore);
+                        alert(`Out of Balls! Final Score: ${pbScore}`);
+                    }
+                }
+            }
+
+            // Update UI
+            document.getElementById('pinball-score').innerText = pbScore;
+            document.getElementById('pinball-balls').innerText = pbBalls;
+            document.getElementById('pinball-mult').innerText = `${pbMultiplier}x`;
+
+            // RENDER
+            pbCtx.fillStyle = '#060812';
+            pbCtx.fillRect(0, 0, pbCanvas.width, pbCanvas.height);
+
+            // Render Table Outer Borders
+            pbCtx.strokeStyle = '#ffea00';
+            pbCtx.lineWidth = 4;
+            pbCtx.strokeRect(15, 15, pbCanvas.width - 30, pbCanvas.height - 30);
+
+            // Render Plunger Lane Barrier
+            pbCtx.beginPath();
+            pbCtx.moveTo(420, 200);
+            pbCtx.lineTo(420, 580);
+            pbCtx.stroke();
+
+            // Render Bumpers
+            pbBumpers.forEach(b => {
+                pbCtx.fillStyle = b.glow > 0 ? '#ff007f' : '#ffea00';
+                pbCtx.shadowBlur = b.glow * 20;
+                pbCtx.shadowColor = '#ff007f';
+                pbCtx.beginPath();
+                pbCtx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+                pbCtx.fill();
+            });
+            pbCtx.shadowBlur = 0;
+
+            // Render Flippers
+            pbCtx.strokeStyle = '#00f3ff';
+            pbCtx.lineWidth = 8;
+            // Left Flipper
+            pbCtx.beginPath();
+            pbCtx.moveTo(120, 480);
+            pbCtx.lineTo(120 + Math.cos(pbLeftFlipperAngle) * 70, 480 + Math.sin(pbLeftFlipperAngle) * 70);
+            pbCtx.stroke();
+            // Right Flipper
+            pbCtx.beginPath();
+            pbCtx.moveTo(320, 480);
+            pbCtx.lineTo(320 - Math.cos(pbRightFlipperAngle) * 70, 480 - Math.sin(pbRightFlipperAngle) * 70);
+            pbCtx.stroke();
+
+            // Render Ball
+            if (pbBall.active) {
+                pbCtx.fillStyle = '#ffffff';
+                pbCtx.shadowBlur = 10;
+                pbCtx.shadowColor = '#ffffff';
+                pbCtx.beginPath();
+                pbCtx.arc(pbBall.x, pbBall.y, pbBall.radius, 0, Math.PI * 2);
+                pbCtx.fill();
+                pbCtx.shadowBlur = 0;
+            }
+
+            pbLoop = requestAnimationFrame(pbGameLoop);
+        }
+
+        // ==========================================
+        // GAME 4: MONSTER DECK ROGUE
+        // ==========================================
+        let roguePlayerHP = 50, roguePlayerMaxHP = 50, roguePlayerBlock = 0, rogueEnergy = 3;
+        let rogueEnemyHP = 40, rogueEnemyMaxHP = 40, rogueEnemyIntent = 8;
+        let rogueWins = 0;
+        let rogueHand = [];
+
+        const rogueDeckMaster = [
+            { id: 1, name: 'Cyber Strike', cost: 1, type: 'attack', val: 8, desc: 'Deal 8 Damage' },
+            { id: 2, name: 'Nanite Shield', cost: 1, type: 'defend', val: 6, desc: 'Gain 6 Shield' },
+            { id: 3, name: 'Overcharge', cost: 2, type: 'attack', val: 15, desc: 'Deal 15 Damage' },
+            { id: 4, name: 'Bio Repair', cost: 1, type: 'heal', val: 5, desc: 'Heal 5 HP' }
+        ];
+
+        function initRogue() {
+            roguePlayerHP = 50;
+            roguePlayerBlock = 0;
+            rogueEnergy = 3;
+            rogueWins = 0;
+            spawnRogueEnemy();
+            rogueDrawHand();
+            updateRogueUI();
+        }
+
+        function spawnRogueEnemy() {
+            rogueEnemyMaxHP = 40 + rogueWins * 15;
+            rogueEnemyHP = rogueEnemyMaxHP;
+            rogueEnemyIntent = 6 + Math.floor(Math.random() * 6) + rogueWins * 2;
+            document.getElementById('rogue-stage').innerText = `Stage ${rogueWins + 1} - Cyber Glitch`;
+        }
+
+        function rogueDrawHand() {
+            rogueHand = [];
+            for (let i = 0; i < 4; i++) {
+                const card = rogueDeckMaster[Math.floor(Math.random() * rogueDeckMaster.length)];
+                rogueHand.push({ ...card, instanceId: Math.random() });
+            }
+        }
+
+        function roguePlayCard(idx) {
+            const card = rogueHand[idx];
+            if (!card || rogueEnergy < card.cost) return;
+
+            rogueEnergy -= card.cost;
+            playSound('card');
+
+            if (card.type === 'attack') {
+                rogueEnemyHP -= card.val;
+                if (rogueEnemyHP <= 0) {
+                    rogueEnemyHP = 0;
+                    rogueWins++;
+                    saveScore('rogue', rogueWins);
+                    alert(`Enemy Destroyed! Stage ${rogueWins} Cleared!`);
+                    spawnRogueEnemy();
+                }
+            } else if (card.type === 'defend') {
+                roguePlayerBlock += card.val;
+            } else if (card.type === 'heal') {
+                roguePlayerHP = Math.min(roguePlayerMaxHP, roguePlayerHP + card.val);
+            }
+
+            rogueHand.splice(idx, 1);
+            updateRogueUI();
+        }
+
+        function rogueEndTurn() {
+            // Enemy Attacks
+            let damage = Math.max(0, rogueEnemyIntent - roguePlayerBlock);
+            roguePlayerBlock = Math.max(0, roguePlayerBlock - rogueEnemyIntent);
+            roguePlayerHP -= damage;
+            playSound('hitNote');
+
+            if (roguePlayerHP <= 0) {
+                roguePlayerHP = 0;
+                saveScore('rogue', rogueWins);
+                alert(`Defeated in combat! Total Wins: ${rogueWins}`);
+                initRogue();
+                return;
+            }
+
+            // Reset turn stats
+            rogueEnergy = 3;
+            rogueEnemyIntent = 6 + Math.floor(Math.random() * 8) + rogueWins * 2;
+            rogueDrawHand();
+            updateRogueUI();
+        }
+
+        function updateRogueUI() {
+            document.getElementById('rogue-wins').innerText = rogueWins;
+            document.getElementById('rogue-enemy-hp-text').innerText = `HP: ${rogueEnemyHP} / ${rogueEnemyMaxHP}`;
+            document.getElementById('rogue-enemy-hp-bar').style.width = `${(rogueEnemyHP / rogueEnemyMaxHP) * 100}%`;
+            document.getElementById('rogue-enemy-intent').innerText = `Intent: Attack ${rogueEnemyIntent}`;
+
+            document.getElementById('rogue-player-hp-text').innerText = `HP: ${roguePlayerHP} / ${roguePlayerMaxHP}`;
+            document.getElementById('rogue-player-hp-bar').style.width = `${(roguePlayerHP / roguePlayerMaxHP) * 100}%`;
+            document.getElementById('rogue-player-block').innerText = `🛡️ Shield: ${roguePlayerBlock}`;
+            document.getElementById('rogue-player-energy').innerText = `⚡ Energy: ${rogueEnergy} / 3`;
+
+            // Render Hand Cards
+            const handContainer = document.getElementById('rogue-hand');
+            handContainer.innerHTML = rogueHand.map((c, i) => `
+                <div onclick="roguePlayCard(${i})" class="bg-slate-900 border ${rogueEnergy >= c.cost ? 'border-purple-500 hover:border-neonPurple cursor-pointer' : 'border-slate-800 opacity-50'} rounded-lg p-3 flex flex-col justify-between transition transform hover:-translate-y-1">
+                    <div class="flex justify-between items-center text-xs font-mono mb-1">
+                        <span class="font-bold text-white">${c.name}</span>
+                        <span class="px-1.5 py-0.5 bg-purple-950 text-neonPurple rounded font-bold">${c.cost}⚡</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 my-1">${c.desc}</p>
+                    <span class="text-[10px] text-purple-400 font-mono uppercase">${c.type}</span>
+                </div>
+            `).join('');
+        }
+
+        // ==========================================
+        // GAME 5: CYBER BEAT EXPRESS
+        // ==========================================
+        let rhCanvas, rhCtx;
+        let rhLoop = null;
+        let rhNotes = [];
+        let rhScore = 0, rhCombo = 0, rhMaxCombo = 0;
+        let rhGrade = 'READY';
+
+        function initRhythm() {
+            rhCanvas = document.getElementById('canvas-rhythm');
+            rhCtx = rhCanvas.getContext('2d');
+            
+            rhNotes = [];
+            rhScore = 0;
+            rhCombo = 0;
+            rhGrade = 'READY';
+
+            // Spawn procedural note sequence
+            for (let i = 0; i < 60; i++) {
+                rhNotes.push({
+                    lane: Math.floor(Math.random() * 4),
+                    y: -i * 90 - 100,
+                    speed: 4,
+                    hit: false
+                });
+            }
+
+            if (rhLoop) cancelAnimationFrame(rhLoop);
+            rhGameLoop();
+        }
+
+        function rhPressLane(lane) {
+            let hit = false;
+            rhNotes.forEach(n => {
+                if (!n.hit && n.lane === lane && n.y > 380 && n.y < 460) {
+                    n.hit = true;
+                    hit = true;
+                    rhScore += 200;
+                    rhCombo++;
+                    if (rhCombo > rhMaxCombo) rhMaxCombo = rhCombo;
+                    rhGrade = 'PERFECT!';
+                    playSound('hitNote');
+                }
+            });
+
+            if (!hit) {
+                rhCombo = 0;
+                rhGrade = 'MISS!';
+            }
+
+            saveScore('rhythm', rhMaxCombo);
+            updateRhUI();
+        }
+
+        function rhGameLoop() {
+            if (currentTab !== 'rhythm') return;
+
+            // Update Note Positions
+            rhNotes.forEach(n => {
+                if (!n.hit) {
+                    n.y += n.speed;
+                    if (n.y > 480) {
+                        n.hit = true;
+                        rhCombo = 0;
+                        rhGrade = 'MISS!';
+                    }
+                }
+            });
+
+            updateRhUI();
+
+            // RENDER
+            rhCtx.fillStyle = '#060812';
+            rhCtx.fillRect(0, 0, rhCanvas.width, rhCanvas.height);
+
+            // Render Lanes
+            const laneWidth = rhCanvas.width / 4;
+            const colors = ['#00f3ff', '#ff007f', '#ffea00', '#00ff66'];
+
+            for (let i = 0; i < 4; i++) {
+                rhCtx.strokeStyle = '#1e293b';
+                rhCtx.strokeRect(i * laneWidth, 0, laneWidth, rhCanvas.height);
+
+                // Hit Line Zone
+                rhCtx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                rhCtx.fillRect(i * laneWidth, 400, laneWidth, 40);
+                rhCtx.strokeStyle = colors[i];
+                rhCtx.strokeRect(i * laneWidth, 400, laneWidth, 40);
+            }
+
+            // Render Falling Notes
+            rhNotes.forEach(n => {
+                if (!n.hit) {
+                    rhCtx.fillStyle = colors[n.lane];
+                    rhCtx.shadowBlur = 10;
+                    rhCtx.shadowColor = colors[n.lane];
+                    rhCtx.fillRect(n.lane * laneWidth + 10, n.y, laneWidth - 20, 20);
+                    rhCtx.shadowBlur = 0;
+                }
+            });
+
+            rhLoop = requestAnimationFrame(rhGameLoop);
+        }
+
+        function updateRhUI() {
+            document.getElementById('rhythm-score').innerText = rhScore;
+            document.getElementById('rhythm-combo').innerText = `${rhCombo}x`;
+            document.getElementById('rhythm-grade').innerText = rhGrade;
+        }
+
+        // --- GLOBAL KEYBOARD & TOUCH BINDINGS ---
+        window.addEventListener('keydown', (e) => {
+            sfKeys[e.code] = true;
+
+            if (currentTab === 'pinball') {
+                if (e.code === 'KeyZ' || e.code === 'ArrowLeft') pbLeftFlipperAngle = -0.3;
+                if (e.code === 'Slash' || e.code === 'ArrowRight') pbRightFlipperAngle = 0.3;
+                if (e.code === 'Space') resetPbBall();
+            }
+
+            if (currentTab === 'rhythm') {
+                if (e.code === 'KeyD' || e.code === 'Digit1') rhPressLane(0);
+                if (e.code === 'KeyF' || e.code === 'Digit2') rhPressLane(1);
+                if (e.code === 'KeyJ' || e.code === 'Digit3') rhPressLane(2);
+                if (e.code === 'KeyK' || e.code === 'Digit4') rhPressLane(3);
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            sfKeys[e.code] = false;
+
+            if (currentTab === 'pinball') {
+                if (e.code === 'KeyZ' || e.code === 'ArrowLeft') pbLeftFlipperAngle = 0.3;
+                if (e.code === 'Slash' || e.code === 'ArrowRight') pbRightFlipperAngle = -0.3;
+            }
+        });
+
+        // Touch Control Binding Setup
+        window.onload = function() {
+            // Starfighter touch
+            const btnLeft = document.getElementById('sf-btn-left');
+            const btnRight = document.getElementById('sf-btn-right');
+            const btnFire = document.getElementById('sf-btn-fire');
+
+            if (btnLeft) {
+                btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); sfKeys['ArrowLeft'] = true; });
+                btnLeft.addEventListener('touchend', (e) => { e.preventDefault(); sfKeys['ArrowLeft'] = false; });
+                btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); sfKeys['ArrowRight'] = true; });
+                btnRight.addEventListener('touchend', (e) => { e.preventDefault(); sfKeys['ArrowRight'] = false; });
+                btnFire.addEventListener('touchstart', (e) => { e.preventDefault(); sfKeys['Space'] = true; });
+                btnFire.addEventListener('touchend', (e) => { e.preventDefault(); sfKeys['Space'] = false; });
+            }
+
+            // Pinball touch
+            const pbLeft = document.getElementById('pb-btn-left');
+            const pbRight = document.getElementById('pb-btn-right');
+            if (pbLeft) {
+                pbLeft.addEventListener('touchstart', (e) => { e.preventDefault(); pbLeftFlipperAngle = -0.3; });
+                pbLeft.addEventListener('touchend', (e) => { e.preventDefault(); pbLeftFlipperAngle = 0.3; });
+                pbRight.addEventListener('touchstart', (e) => { e.preventDefault(); pbRightFlipperAngle = 0.3; });
+                pbRight.addEventListener('touchend', (e) => { e.preventDefault(); pbRightFlipperAngle = -0.3; });
+            }
+
+            // Rhythm touch
+            for (let i = 0; i < 4; i++) {
+                const rhBtn = document.getElementById(`rh-btn-${i}`);
+                if (rhBtn) {
+                    rhBtn.addEventListener('touchstart', (e) => { e.preventDefault(); rhPressLane(i); });
+                }
+            }
+
+            // Initialize default UI scores
+            updateScoresUI();
+        };
+    </script>
+</body>
+</html>
