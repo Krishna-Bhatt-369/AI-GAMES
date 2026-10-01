@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procedural Sound & Lyrics Generator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#0a0f1d',
+                        darkcard: 'rgba(17, 24, 39, 0.75)',
+                        neoncyan: '#00f2fe',
+                        neonmagenta: '#ec4899',
+                        neonpurple: '#9d4edd',
+                        neongreen: '#10b981'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0a0f1d;
+            color: #f3f4f6;
+            font-family: 'Inter', sans-serif;
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(0, 242, 254, 0.08) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(236, 72, 153, 0.08) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+        .glow-cyan {
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.35);
+        }
+        .glow-magenta {
+            box-shadow: 0 0 20px rgba(236, 72, 153, 0.35);
+        }
+        .glow-text-cyan {
+            text-shadow: 0 0 12px rgba(0, 242, 254, 0.6);
+        }
+        .glow-text-magenta {
+            text-shadow: 0 0 12px rgba(236, 72, 153, 0.6);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0f1d; }
+        ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #0891b2; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-cyan-500 selection:text-black">
+
+    <!-- HEADER NAVBAR -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-gray-800 px-4 lg:px-8 py-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-purple-500 to-pink-500 flex items-center justify-center text-darkbg font-extrabold text-xl shadow-lg shadow-cyan-500/20">
+                    <i class="fa-solid fa-compact-disc animate-spin-slow"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg lg:text-xl tracking-tight text-white flex items-center gap-2">
+                        SYNTHESIS <span class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-mono">Web Audio Engine</span>
+                    </h1>
+                    <p class="text-xs text-gray-400 hidden sm:block">Procedural Algorithmic Music & Lyric Synthesizer</p>
+                </div>
+            </div>
+
+            <!-- Master Visual Status Badge -->
+            <div class="flex items-center gap-3">
+                <div id="engine-status" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-900/80 border border-gray-800 text-xs font-mono text-gray-400">
+                    <span class="w-2 h-2 rounded-full bg-gray-500" id="status-dot"></span>
+                    <span id="status-text">Engine Ready</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 lg:p-8 space-y-6">
+
+        <!-- MAIN CONTROL BANNER -->
+        <div class="glass-panel p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="space-y-1 text-center md:text-left">
+                <div class="text-xs font-mono text-cyan-400 tracking-wider uppercase">NOW GENERATING</div>
+                <h2 id="song-title" class="text-2xl md:text-3xl font-extrabold text-white glow-text-cyan tracking-tight">
+                    "Quantum Cipher Routine"
+                </h2>
+                <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1 text-xs font-mono text-gray-400">
+                    <span id="badge-genre" class="px-2.5 py-1 rounded-lg bg-pink-500/10 text-pink-400 border border-pink-500/30">Synthwave</span>
+                    <span id="badge-key" class="px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/30">A Minor</span>
+                    <span id="badge-bpm" class="px-2.5 py-1 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">120 BPM</span>
+                </div>
+            </div>
+
+            <!-- Primary Play & Generate Controls -->
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <button id="btn-generate" onclick="generateNewSong()" class="flex-1 md:flex-none px-5 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-semibold text-sm transition-all border border-gray-700 flex items-center justify-center gap-2 active:scale-95 shadow-md">
+                    <i class="fa-solid fa-dice text-cyan-400"></i> Generate Song
+                </button>
+                <button id="btn-play" onclick="togglePlay()" class="flex-1 md:flex-none px-8 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-darkbg font-extrabold text-base transition-all glow-cyan flex items-center justify-center gap-2 active:scale-95 shadow-lg">
+                    <i id="play-icon" class="fa-solid fa-play"></i> <span id="play-text">Play</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- GRID SECTION: CONTROLS & VISUALIZER -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- PANEL 1: SYNTH PARAMETERS & GENRE SELECTOR -->
+            <div class="glass-panel p-6 rounded-2xl space-y-5 lg:col-span-1 flex flex-col justify-between">
+                <h3 class="text-base font-bold text-white flex items-center gap-2 border-b border-gray-800 pb-3">
+                    <i class="fa-solid fa-sliders text-cyan-400"></i> Synthesis Controls
+                </h3>
+
+                <div class="space-y-4">
+                    <!-- Genre Selector -->
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1.5 uppercase">Genre & Vibe</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="selectGenre('synthwave')" id="genre-synthwave" class="genre-btn px-3 py-2 rounded-xl text-xs font-mono text-left transition-all bg-pink-500/20 text-pink-300 border border-pink-500/40">
+                                🌆 Synthwave
+                            </button>
+                            <button onclick="selectGenre('lofi')" id="genre-lofi" class="genre-btn px-3 py-2 rounded-xl text-xs font-mono text-left transition-all bg-gray-800 text-gray-400 hover:text-white border border-gray-700">
+                                ☕ Lo-Fi Chill
+                            </button>
+                            <button onclick="selectGenre('cyberpunk')" id="genre-cyberpunk" class="genre-btn px-3 py-2 rounded-xl text-xs font-mono text-left transition-all bg-gray-800 text-gray-400 hover:text-white border border-gray-700">
+                                ⚡ Cyberpunk
+                            </button>
+                            <button onclick="selectGenre('chiptune')" id="genre-chiptune" class="genre-btn px-3 py-2 rounded-xl text-xs font-mono text-left transition-all bg-gray-800 text-gray-400 hover:text-white border border-gray-700">
+                                👾 8-Bit Chiptune
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tempo / BPM Slider -->
+                    <div>
+                        <div class="flex justify-between text-xs font-mono text-gray-400 mb-1">
+                            <span>TEMPO (BPM)</span>
+                            <span id="bpm-val" class="text-cyan-400 font-bold">120 BPM</span>
+                        </div>
+                        <input type="range" id="bpm-slider" min="60" max="160" value="120" oninput="updateBpm(this.value)" class="w-full accent-cyan-400 bg-gray-800 rounded-lg cursor-pointer h-2">
+                    </div>
+
+                    <!-- Scale / Key Selector -->
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1.5 uppercase">Scale / Harmonic Key</label>
+                        <select id="scale-select" onchange="updateScale(this.value)" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-xs font-mono text-gray-200 focus:outline-none focus:border-cyan-400">
+                            <option value="A_MINOR">A Minor (Melancholic / Dark)</option>
+                            <option value="C_MAJOR">C Major (Bright / Energetic)</option>
+                            <option value="PENTATONIC">Minor Pentatonic (Bluesy / Retro)</option>
+                            <option value="DORIAN">Dorian Mode (Futuristic / Moody)</option>
+                        </select>
+                    </div>
+
+                    <!-- Sound Toggle Switches -->
+                    <div class="pt-2 space-y-2 border-t border-gray-800/80">
+                        <label class="flex items-center justify-between text-xs font-mono text-gray-300 cursor-pointer">
+                            <span>Bassline Synth</span>
+                            <input type="checkbox" id="toggle-bass" checked onchange="toggleTrack('bass', this.checked)" class="accent-pink-500 w-4 h-4">
+                        </label>
+                        <label class="flex items-center justify-between text-xs font-mono text-gray-300 cursor-pointer">
+                            <span>Arpeggiator Lead</span>
+                            <input type="checkbox" id="toggle-arp" checked onchange="toggleTrack('arp', this.checked)" class="accent-cyan-400 w-4 h-4">
+                        </label>
+                        <label class="flex items-center justify-between text-xs font-mono text-gray-300 cursor-pointer">
+                            <span>Procedural Drums</span>
+                            <input type="checkbox" id="toggle-drums" checked onchange="toggleTrack('drums', this.checked)" class="accent-purple-500 w-4 h-4">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-gray-800 text-[11px] font-mono text-gray-500 text-center">
+                    Web Audio Synthesis: Dual Oscillators + Moog Filter
+                </div>
+            </div>
+
+            <!-- PANEL 2: CANVAS AUDIO VISUALIZER & REAL-TIME LYRICS -->
+            <div class="space-y-6 lg:col-span-2">
+                
+                <!-- Audio Visualizer Window -->
+                <div class="glass-panel p-5 rounded-2xl space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-wave-square text-pink-500"></i> Audio Spectrum Visualizer
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <button onclick="setVisMode('bars')" id="btn-vis-bars" class="px-2.5 py-1 rounded-lg text-xs font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">Bars</button>
+                            <button onclick="setVisMode('wave')" id="btn-vis-wave" class="px-2.5 py-1 rounded-lg text-xs font-mono bg-gray-800 text-gray-400 hover:text-white border border-gray-700">Oscilloscope</button>
+                        </div>
+                    </div>
+
+                    <!-- Canvas -->
+                    <div class="h-48 md:h-56 bg-gray-950/90 rounded-xl border border-gray-800 overflow-hidden relative">
+                        <canvas id="visualizer-canvas" class="w-full h-full block"></canvas>
+                        <div id="canvas-overlay" class="absolute inset-0 flex items-center justify-center text-gray-600 font-mono text-xs pointer-events-none">
+                            [ Press Play to start audio visualization ]
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Procedural Lyric Display Box -->
+                <div class="glass-panel p-6 rounded-2xl space-y-4">
+                    <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-quote-left text-purple-400"></i> Generated AI Lyrics
+                        </h3>
+                        <button onclick="copyLyrics()" class="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1 bg-cyan-500/10 px-2.5 py-1 rounded border border-cyan-500/30">
+                            <i class="fa-solid fa-copy"></i> Copy Lyrics
+                        </button>
+                    </div>
+
+                    <div id="lyrics-container" class="space-y-2.5 py-2 font-mono text-sm md:text-base leading-relaxed text-gray-200">
+                        <!-- Lyrics line items injected dynamically -->
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-gray-800/80 py-5 px-4 text-center text-xs text-gray-500 glass-panel mt-8">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p>Native Web Audio API Synth Engine • Zero External Audio Files</p>
+            <p class="font-mono text-gray-600">Pure JavaScript Procedural Sound & Word Generation</p>
+        </div>
+    </footer>
+
+    <script>
+        // ==========================================
+        // 1. MUSIC & SCALES DATA CONSTANTS
+        // ==========================================
+        const NOTE_FREQS = {
+            'C2': 65.41, 'D2': 73.42, 'E2': 82.41, 'F2': 87.31, 'G2': 98.00, 'A2': 110.00, 'B2': 123.47,
+            'C3': 130.81, 'D3': 146.83, 'E3': 164.81, 'F3': 174.61, 'G3': 196.00, 'A3': 220.00, 'B3': 246.94,
+            'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 'G4': 392.00, 'A4': 440.00, 'B4': 493.88,
+            'C5': 523.25, 'D5': 587.33, 'E5': 659.25, 'G5': 783.99, 'A5': 880.00
+        };
+
+        const SCALES = {
+            'A_MINOR': ['A2', 'C3', 'D3', 'E3', 'G3', 'A3', 'C4', 'D4', 'E4', 'G4', 'A4'],
+            'C_MAJOR': ['C3', 'D3', 'E3', 'G3', 'A3', 'C4', 'D4', 'E4', 'G4', 'A4', 'C5'],
+            'PENTATONIC': ['A2', 'C3', 'D3', 'E3', 'G3', 'A3', 'C4', 'D4', 'E4', 'G4'],
+            'DORIAN': ['A2', 'B2', 'C3', 'D3', 'E3', 'F#3', 'G3', 'A3', 'C4', 'D4', 'E4']
+        };
+
+        const GENRE_CONFIGS = {
+            synthwave: {
+                bpm: 120,
+                scale: 'A_MINOR',
+                wave: 'sawtooth',
+                filterFreq: 1400,
+                bassWave: 'sawtooth',
+                titlePrefixes: ['Neon', 'Cyber', 'Midnight', 'Retrofuturist', 'Digital', 'Velvet', 'Tokyo'],
+                titleSuffixes: ['Drive', 'Horizon', 'Overdrive', 'Run', 'Memories', 'Pulse', 'Grid']
+            },
+            lofi: {
+                bpm: 82,
+                scale: 'C_MAJOR',
+                wave: 'sine',
+                filterFreq: 600,
+                bassWave: 'triangle',
+                titlePrefixes: ['Midnight', 'Rainy', 'Coffee', 'Distant', 'Quiet', 'Lofi', 'Solitude'],
+                titleSuffixes: ['Study', 'Thoughts', 'Window', 'Lo-Fi Beats', 'Avenue', 'Echoes', 'Drift']
+            },
+            cyberpunk: {
+                bpm: 135,
+                scale: 'DORIAN',
+                wave: 'square',
+                filterFreq: 2200,
+                bassWave: 'sawtooth',
+                titlePrefixes: ['Neural', 'Matrix', 'Sub-Zero', 'Synthetic', 'Glitch', 'Android', 'Protocol'],
+                titleSuffixes: ['Infiltration', 'Breach', 'Core', 'Overload', 'Network', 'Sector 7', 'Daemon']
+            },
+            chiptune: {
+                bpm: 140,
+                scale: 'PENTATONIC',
+                wave: 'square',
+                filterFreq: 3500,
+                bassWave: 'square',
+                titlePrefixes: ['Pixel', '8-Bit', 'Super', 'Quest', 'Arcade', 'Turbo', 'Boss'],
+                titleSuffixes: ['Adventure', 'Stage 1', 'Hero', 'Stage Clear', 'Glitch', 'Powerup', 'Level']
+            }
+        };
+
+        // Word pools for procedural lyric generator
+        const LYRIC_POOLS = {
+            nouns: ['neon grid', 'cipher string', 'silicon soul', 'subroutine', 'digital rain', 'quantum echo', 'binary heart', 'frequency', 'circuit board', 'data stream', 'phantom signal', 'dark horizon'],
+            verbs: ['compiles inside', 'pulses through', 'transcends', 'glitches soft', 'decrypts the', 'flows across', 'reboots my', 'echoes in', 'shadows the', 'overclocks'],
+            adjectives: ['infinite', 'synthetic', 'holographic', 'distant', 'electric', 'sub-zero', 'encapsulated', 'lost', 'luminescent', 'autonomous'],
+            metaphors: [
+                'In the silence of the mainframe, light remains.',
+                'Tracing shadows through a world of zeroes and ones.',
+                'Underneath the cyan sky, the network breathes.',
+                'Lost inside a loop of endless algorithmic dreams.',
+                'A single whisper in the high-voltage dark.',
+                'Rebuilding memories from cached fragments of time.'
+            ]
+        };
+
+        // ==========================================
+        // 2. STATE VARIABLES
+        // ==========================================
+        let audioCtx = null;
+        let masterGain = null;
+        let analyser = null;
+        let isPlaying = false;
+        let currentBpm = 120;
+        let currentScaleKey = 'A_MINOR';
+        let currentGenre = 'synthwave';
+        let visMode = 'bars';
+        let currentSongTitle = "Quantum Cipher Routine";
+        let currentLyrics = [];
+
+        // Tracks state
+        let trackEnabled = { bass: true, arp: true, drums: true };
+
+        // Sequencer timing variables
+        let currentStep = 0;
+        let timerId = null;
+
+        // ==========================================
+        // 3. WEB AUDIO API SYNTHESIZER ENGINE
+        // ==========================================
+        function initAudioContext() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContextClass();
+
+                masterGain = audioCtx.createGain();
+                masterGain.gain.value = 0.4; // Master volume safe limit
+
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 128;
+
+                masterGain.connect(analyser);
+                analyser.connect(audioCtx.destination);
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Synthesize Kick Drum
+        function playKick(time) {
+            if (!trackEnabled.drums) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(130, time);
+            osc.frequency.exponentialRampToValueAtTime(0.01, time + 0.3);
+
+            gain.gain.setValueAtTime(1, time);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.3);
+
+            osc.connect(gain);
+            gain.connect(masterGain);
+
+            osc.start(time);
+            osc.stop(time + 0.3);
+        }
+
+        // Synthesize Snare Drum
+        function playSnare(time) {
+            if (!trackEnabled.drums) return;
+            // Noise buffer
+            const bufferSize = audioCtx.sampleRate * 0.15;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+
+            const noiseFilter = audioCtx.createBiquadFilter();
+            noiseFilter.type = 'highpass';
+            noiseFilter.frequency.value = 800;
+
+            const noiseGain = audioCtx.createGain();
+            noiseGain.gain.setValueAtTime(0.6, time);
+            noiseGain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
+
+            noise.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(masterGain);
+
+            noise.start(time);
+            noise.stop(time + 0.2);
+        }
+
+        // Synthesize Synth Lead/Arp Note
+        function playSynthNote(freq, time, duration = 0.2) {
+            if (!trackEnabled.arp) return;
+            const config = GENRE_CONFIGS[currentGenre];
+            const osc = audioCtx.createOscillator();
+            const filter = audioCtx.createBiquadFilter();
+            const gain = audioCtx.createGain();
+
+            osc.type = config.wave;
+            osc.frequency.setValueAtTime(freq, time);
+
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(config.filterFreq, time);
+
+            gain.gain.setValueAtTime(0.25, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(masterGain);
+
+            osc.start(time);
+            osc.stop(time + duration);
+        }
+
+        // Synthesize Bass Note
+        function playBassNote(freq, time, duration = 0.35) {
+            if (!trackEnabled.bass) return;
+            const config = GENRE_CONFIGS[currentGenre];
+            const osc = audioCtx.createOscillator();
+            const filter = audioCtx.createBiquadFilter();
+            const gain = audioCtx.createGain();
+
+            osc.type = config.bassWave;
+            osc.frequency.setValueAtTime(freq, time);
+
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(500, time);
+
+            gain.gain.setValueAtTime(0.4, time);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + duration);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(masterGain);
+
+            osc.start(time);
+            osc.stop(time + duration);
+        }
+
+        // ==========================================
+        // 4. STEP SEQUENCER & PLAYBACK LOOP
+        // ==========================================
+        function stepSequencer() {
+            if (!isPlaying) return;
+
+            const scaleNotes = SCALES[currentScaleKey] || SCALES['A_MINOR'];
+            const now = audioCtx.currentTime;
+
+            // Drums (4/4 Beat pattern)
+            if (currentStep % 4 === 0) {
+                playKick(now);
+            } else if (currentStep % 4 === 2) {
+                playSnare(now);
+            }
+
+            // Bassline (Plays on quarter note beats)
+            if (currentStep % 2 === 0) {
+                const bassFreq = NOTE_FREQS[scaleNotes[0]] || 110;
+                playBassNote(bassFreq, now, 0.3);
+            }
+
+            // Arpeggiator (Generates pseudo-random melody from selected scale)
+            const noteIndex = (currentStep * 3 + Math.floor(Math.random() * 2)) % scaleNotes.length;
+            const arpNote = scaleNotes[noteIndex];
+            if (NOTE_FREQS[arpNote]) {
+                playSynthNote(NOTE_FREQS[arpNote], now, 0.2);
+            }
+
+            currentStep = (currentStep + 1) % 16;
+
+            // Schedule next step based on BPM
+            const stepTimeMs = (60 / currentBpm / 4) * 1000;
+            timerId = setTimeout(stepSequencer, stepTimeMs);
+        }
+
+        function togglePlay() {
+            initAudioContext();
+
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('btn-play');
+            const playIcon = document.getElementById('play-icon');
+            const playText = document.getElementById('play-text');
+            const statusDot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
+            const overlay = document.getElementById('canvas-overlay');
+
+            if (isPlaying) {
+                currentStep = 0;
+                stepSequencer();
+                playIcon.className = "fa-solid fa-pause";
+                playText.innerText = "Pause";
+                playBtn.className = "flex-1 md:flex-none px-8 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-extrabold text-base transition-all glow-magenta flex items-center justify-center gap-2 active:scale-95 shadow-lg";
+                
+                statusDot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-ping";
+                statusText.innerText = "Playing Live Audio";
+                overlay.style.display = 'none';
+
+                drawVisualizer();
+            } else {
+                clearTimeout(timerId);
+                playIcon.className = "fa-solid fa-play";
+                playText.innerText = "Play";
+                playBtn.className = "flex-1 md:flex-none px-8 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-darkbg font-extrabold text-base transition-all glow-cyan flex items-center justify-center gap-2 active:scale-95 shadow-lg";
+
+                statusDot.className = "w-2 h-2 rounded-full bg-gray-500";
+                statusText.innerText = "Engine Paused";
+                overlay.style.display = 'flex';
+            }
+        }
+
+        // ==========================================
+        // 5. PROCEDURAL SONG & LYRICS GENERATOR
+        // ==========================================
+        function getRandomItem(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function generateNewSong() {
+            const config = GENRE_CONFIGS[currentGenre];
+
+            // 1. Generate Title
+            const p = getRandomItem(config.titlePrefixes);
+            const s = getRandomItem(config.titleSuffixes);
+            currentSongTitle = `"${p} ${s}"`;
+            document.getElementById('song-title').innerText = currentSongTitle;
+
+            // 2. Randomize Scale/Key
+            const scaleKeys = Object.keys(SCALES);
+            currentScaleKey = getRandomItem(scaleKeys);
+            document.getElementById('scale-select').value = currentScaleKey;
+            document.getElementById('badge-key').innerText = currentScaleKey.replace('_', ' ');
+
+            // 3. Generate 4-Line Lyrics
+            const n1 = getRandomItem(LYRIC_POOLS.nouns);
+            const n2 = getRandomItem(LYRIC_POOLS.nouns);
+            const v1 = getRandomItem(LYRIC_POOLS.verbs);
+            const adj1 = getRandomItem(LYRIC_POOLS.adjectives);
+            const meta = getRandomItem(LYRIC_POOLS.metaphors);
+
+            currentLyrics = [
+                `Line 1: The ${adj1} ${n1} ${v1} the dark.`,
+                `Line 2: ${meta}`,
+                `Line 3: Scanning frequency through a ${n2}...`,
+                `Line 4: System rebooted, the song begins again.`
+            ];
+
+            const lyricsContainer = document.getElementById('lyrics-container');
+            lyricsContainer.innerHTML = '';
+            currentLyrics.forEach((line, idx) => {
+                const pEl = document.createElement('p');
+                pEl.className = "hover:text-cyan-400 transition-colors cursor-pointer flex items-start gap-2";
+                pEl.innerHTML = `<span class="text-xs text-pink-500 font-bold select-none">[0${idx+1}]</span> <span>${line.replace(/Line \d+: /, '')}</span>`;
+                lyricsContainer.appendChild(pEl);
+            });
+        }
+
+        function copyLyrics() {
+            const textToCopy = `${currentSongTitle}\n\n` + currentLyrics.map(l => l.replace(/Line \d+: /, '')).join('\n');
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(textToCopy);
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = textToCopy;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+            }
+            alert("Lyrics copied to clipboard!");
+        }
+
+        // ==========================================
+        // 6. AUDIO VISUALIZER (CANVAS)
+        // ==========================================
+        function drawVisualizer() {
+            if (!isPlaying || !analyser) return;
+
+            const canvas = document.getElementById('visualizer-canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Responsive sizing
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            function renderFrame() {
+                if (!isPlaying) return;
+                requestAnimationFrame(renderFrame);
+
+                ctx.fillStyle = 'rgba(10, 15, 29, 0.25)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                if (visMode === 'bars') {
+                    analyser.getByteFrequencyData(dataArray);
+                    const barWidth = (canvas.width / bufferLength) * 2.2;
+                    let barHeight;
+                    let x = 0;
+
+                    for (let i = 0; i < bufferLength; i++) {
+                        barHeight = (dataArray[i] / 255) * canvas.height * 0.8;
+
+                        const gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
+                        gradient.addColorStop(0, '#00f2fe');
+                        gradient.addColorStop(1, '#ec4899');
+
+                        ctx.fillStyle = gradient;
+                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = '#00f2fe';
+                        ctx.fillRect(x, canvas.height - barHeight, barWidth - 2, barHeight);
+
+                        x += barWidth;
+                    }
+                } else {
+                    // Oscilloscope Mode
+                    analyser.getByteTimeDomainData(dataArray);
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = '#00f2fe';
+                    ctx.shadowBlur = 12;
+                    ctx.shadowColor = '#00f2fe';
+                    ctx.beginPath();
+
+                    const sliceWidth = canvas.width * 1.0 / bufferLength;
+                    let x = 0;
+
+                    for (let i = 0; i < bufferLength; i++) {
+                        const v = dataArray[i] / 128.0;
+                        const y = v * canvas.height / 2;
+
+                        if (i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+
+                        x += sliceWidth;
+                    }
+
+                    ctx.lineTo(canvas.width, canvas.height / 2);
+                    ctx.stroke();
+                }
+            }
+
+            renderFrame();
+        }
+
+        // ==========================================
+        // 7. UI EVENT HANDLERS & UPDATERS
+        // ==========================================
+        function selectGenre(genreKey) {
+            currentGenre = genreKey;
+            const config = GENRE_CONFIGS[genreKey];
+
+            // Update Buttons Styling
+            document.querySelectorAll('.genre-btn').forEach(btn => {
+                btn.className = "genre-btn px-3 py-2 rounded-xl text-xs font-mono text-left transition-all bg-gray-800 text-gray-400 hover:text-white border border-gray-700";
+            });
+            const activeBtn = document.getElementById(`genre-${genreKey}`);
+            if (activeBtn) {
+                activeBtn.className = "genre-btn px-3 py-2 rounded-xl text-xs font-mono text-left transition-all bg-pink-500/20 text-pink-300 border border-pink-500/40";
+            }
+
+            // Update BPM & Badge
+            updateBpm(config.bpm);
+            document.getElementById('bpm-slider').value = config.bpm;
+            document.getElementById('badge-genre').innerText = genreKey.toUpperCase();
+
+            generateNewSong();
+        }
+
+        function updateBpm(val) {
+            currentBpm = parseInt(val);
+            document.getElementById('bpm-val').innerText = `${currentBpm} BPM`;
+            document.getElementById('badge-bpm').innerText = `${currentBpm} BPM`;
+        }
+
+        function updateScale(val) {
+            currentScaleKey = val;
+            document.getElementById('badge-key').innerText = val.replace('_', ' ');
+        }
+
+        function toggleTrack(trackName, isChecked) {
+            trackEnabled[trackName] = isChecked;
+        }
+
+        function setVisMode(mode) {
+            visMode = mode;
+            document.getElementById('btn-vis-bars').className = mode === 'bars' ? 
+                "px-2.5 py-1 rounded-lg text-xs font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/40" : 
+                "px-2.5 py-1 rounded-lg text-xs font-mono bg-gray-800 text-gray-400 hover:text-white border border-gray-700";
+            
+            document.getElementById('btn-vis-wave').className = mode === 'wave' ? 
+                "px-2.5 py-1 rounded-lg text-xs font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/40" : 
+                "px-2.5 py-1 rounded-lg text-xs font-mono bg-gray-800 text-gray-400 hover:text-white border border-gray-700";
+        }
+
+        // On Page Load Initialization
+        window.onload = function() {
+            generateNewSong();
+        };
+    </script>
+</body>
+</html>
