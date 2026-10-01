@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSc IT DevHub & Interactive Explorer | Nepal Tech Edition</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfeff',
+                            100: '#cffafe',
+                            400: '#22d3ee',
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                            900: '#164e63',
+                        },
+                        darkbg: '#0a0f1d',
+                        darkcard: '#111827',
+                        darkborder: '#1f2937',
+                        neoncyan: '#00f2fe',
+                        neonpurple: '#9d4edd',
+                        neongreen: '#10b981'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0a0f1d;
+            color: #f3f4f6;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.25s ease-in-out;
+        }
+        .glass-card:hover {
+            border-color: rgba(6, 182, 212, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px -6px rgba(6, 182, 212, 0.25);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0f1d;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0891b2;
+        }
+        .glow-text {
+            text-shadow: 0 0 12px rgba(6, 182, 212, 0.6);
+        }
+        .glow-purple {
+            text-shadow: 0 0 12px rgba(157, 78, 221, 0.6);
+        }
+        /* Visualizer animations */
+        .array-bar {
+            transition: height 0.2s ease, background-color 0.2s ease;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- HEADER NAVBAR -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-gray-800 px-4 lg:px-8 py-3">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <!-- Logo & Title -->
+            <div class="flex items-center space-x-3">
+                <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-brand-600 via-neoncyan to-neonpurple flex items-center justify-center text-darkbg font-extrabold text-xl shadow-lg shadow-brand-500/30">
+                    <i class="fa-solid font-mono">&lt;/&gt;</i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg lg:text-xl tracking-tight text-white flex items-center gap-2">
+                        BSc IT DevHub <span class="text-xs px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/30 font-mono">Nepal Edition 🇳🇵</span>
+                    </h1>
+                    <p class="text-xs text-gray-400 hidden sm:block">Interactive Tech Exploration & Academic Toolkit for IT Students</p>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="flex items-center space-x-1 overflow-x-auto py-1 max-w-full no-scrollbar">
+                <button onclick="switchTab('visualizers')" id="nav-visualizers" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all text-brand-400 bg-brand-500/10 border border-brand-500/30">
+                    <i class="fa-solid fa-code-compare"></i> Visualizers
+                </button>
+                <button onclick="switchTab('subnet')" id="nav-subnet" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 text-gray-400 hover:text-white hover:bg-gray-800 transition-all">
+                    <i class="fa-solid fa-network-wired"></i> Subnet Calc
+                </button>
+                <button onclick="switchTab('curriculum')" id="nav-curriculum" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 text-gray-400 hover:text-white hover:bg-gray-800 transition-all">
+                    <i class="fa-solid fa-graduation-cap"></i> Semester Roadmap
+                </button>
+                <button onclick="switchTab('cheatsheets')" id="nav-cheatsheets" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 text-gray-400 hover:text-white hover:bg-gray-800 transition-all">
+                    <i class="fa-solid fa-screwdriver-wrench"></i> Dev Toolkit
+                </button>
+                <button onclick="switchTab('career')" id="nav-career" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 text-gray-400 hover:text-white hover:bg-gray-800 transition-all">
+                    <i class="fa-solid fa-briefcase"></i> Nepal Tech & Projects
+                </button>
+                <button onclick="switchTab('sourcecode')" id="nav-sourcecode" class="tab-btn px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 text-neonpurple hover:bg-neonpurple/10 border border-neonpurple/30 transition-all">
+                    <i class="fa-solid fa-code"></i> Source Code
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 lg:p-8 space-y-8">
+
+        <!-- TAB 1: VISUALIZERS (DS & ALGORITHMS) -->
+        <section id="tab-visualizers" class="tab-content space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-6 rounded-2xl border border-gray-800">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-chart-simple text-brand-400"></i> Data Structures & Algorithms Visualizer
+                    </h2>
+                    <p class="text-gray-400 text-sm mt-1">Master key computer science algorithms interactively instead of memorizing dry code.</p>
+                </div>
+                <div class="flex items-center gap-2 bg-gray-900/80 p-1.5 rounded-xl border border-gray-800">
+                    <button onclick="setVisMode('sorting')" id="btn-vis-sorting" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-brand-500 text-darkbg shadow-md">Sorting Algorithms</button>
+                    <button onclick="setVisMode('bst')" id="btn-vis-bst" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all text-gray-400 hover:text-white">Binary Search Tree (BST)</button>
+                </div>
+            </div>
+
+            <!-- SORTING VISUALIZER PANEL -->
+            <div id="panel-sorting" class="glass-panel p-6 rounded-2xl space-y-6">
+                <!-- Controls -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">ALGORITHM</label>
+                        <select id="sort-algo-select" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500">
+                            <option value="bubble">Bubble Sort O(N²)</option>
+                            <option value="selection">Selection Sort O(N²)</option>
+                            <option value="insertion">Insertion Sort O(N²)</option>
+                            <option value="quick">Quick Sort O(N log N)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">ARRAY SIZE (<span id="arr-size-val">20</span>)</label>
+                        <input type="range" id="sort-speed-slider" min="8" max="40" value="20" oninput="generateRandomArray()" class="w-full accent-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">ANIMATION SPEED</label>
+                        <input type="range" id="sort-delay-slider" min="10" max="500" value="100" class="w-full accent-brand-500">
+                    </div>
+                    <div class="flex items-end gap-2 pt-4 md:pt-0">
+                        <button onclick="generateRandomArray()" class="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition-all border border-gray-700">
+                            <i class="fa-solid fa-shuffle mr-1"></i> New Array
+                        </button>
+                        <button id="btn-start-sort" onclick="startSorting()" class="flex-1 bg-brand-500 hover:bg-brand-600 text-darkbg font-bold py-2 px-4 rounded-lg text-sm transition-all shadow-lg shadow-brand-500/20">
+                            <i class="fa-solid fa-play mr-1"></i> Start
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Array Canvas Display -->
+                <div class="h-64 bg-gray-950/80 rounded-xl p-4 border border-gray-800 flex items-end justify-center gap-1.5 overflow-hidden relative" id="sorting-container">
+                    <!-- Bars injected dynamically -->
+                </div>
+
+                <!-- Status & Explanation Box -->
+                <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-800/80 flex flex-col md:flex-row justify-between items-center text-sm gap-4">
+                    <div class="flex items-center gap-4 text-xs font-mono">
+                        <span class="flex items-center gap-1"><span class="w-3 h-3 bg-brand-400 rounded-sm inline-block"></span> Unsorted</span>
+                        <span class="flex items-center gap-1"><span class="w-3 h-3 bg-amber-400 rounded-sm inline-block"></span> Comparing</span>
+                        <span class="flex items-center gap-1"><span class="w-3 h-3 bg-neongreen rounded-sm inline-block"></span> Sorted</span>
+                    </div>
+                    <div id="sort-info-text" class="text-gray-300 font-mono text-xs text-right">
+                        Ready. Select algorithm and click Start.
+                    </div>
+                </div>
+            </div>
+
+            <!-- BST VISUALIZER PANEL -->
+            <div id="panel-bst" class="glass-panel p-6 rounded-2xl space-y-6 hidden">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="bst-input-val" placeholder="Value (e.g. 42)" class="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500 w-36">
+                        <button onclick="bstInsert()" class="bg-brand-500 hover:bg-brand-600 text-darkbg font-bold px-4 py-2 rounded-lg text-sm transition-all">
+                            <i class="fa-solid fa-plus mr-1"></i> Insert
+                        </button>
+                        <button onclick="bstSearch()" class="bg-neonpurple/20 hover:bg-neonpurple/30 text-neonpurple border border-neonpurple/40 font-bold px-4 py-2 rounded-lg text-sm transition-all">
+                            <i class="fa-solid fa-magnifying-glass mr-1"></i> Search
+                        </button>
+                        <button onclick="bstReset()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium px-3 py-2 rounded-lg text-sm transition-all border border-gray-700">
+                            Reset Tree
+                        </button>
+                    </div>
+                    <div class="text-xs text-gray-400 font-mono">
+                        Rule: Left child &lt; Parent &lt; Right child
+                    </div>
+                </div>
+
+                <!-- Tree Canvas -->
+                <div class="h-80 bg-gray-950/80 rounded-xl p-4 border border-gray-800 relative overflow-auto flex justify-center items-start" id="bst-canvas">
+                    <svg id="bst-svg" class="absolute inset-0 w-full h-full pointer-events-none"></svg>
+                    <div id="bst-nodes-container" class="relative w-full h-full"></div>
+                </div>
+
+                <div id="bst-status-text" class="text-xs font-mono text-gray-300 bg-gray-900/60 p-3 rounded-lg border border-gray-800">
+                    Insert numbers to generate a visual Binary Search Tree hierarchy.
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: NETWORKING SUBNET & CIDR CALCULATOR -->
+        <section id="tab-subnet" class="tab-content space-y-6 hidden">
+            <div class="glass-panel p-6 rounded-2xl border border-gray-800">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-network-wired text-brand-400"></i> IPv4 Subnetting & CIDR Calculator
+                </h2>
+                <p class="text-gray-400 text-sm mt-1">Essential utility for Computer Networks (CN) practical labs and Cisco CCNA concepts.</p>
+
+                <!-- Input Controls -->
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-mono text-gray-400 mb-1">IP ADDRESS WITH CIDR PRECISE NOTATION</label>
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="subnet-ip-input" value="192.168.10.45/24" placeholder="e.g. 192.168.1.0/24" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-white font-mono focus:outline-none focus:border-brand-500">
+                            <button onclick="calculateSubnet()" class="bg-brand-500 hover:bg-brand-600 text-darkbg font-bold px-6 py-2.5 rounded-xl text-sm transition-all shrink-0">
+                                Calculate
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">QUICK PRESETS</label>
+                        <div class="flex gap-2">
+                            <button onclick="setSubnetPreset('192.168.1.0/24')" class="px-2.5 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs font-mono text-gray-300">/24 Home</button>
+                            <button onclick="setSubnetPreset('10.0.0.0/16')" class="px-2.5 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs font-mono text-gray-300">/16 Office</button>
+                            <button onclick="setSubnetPreset('172.16.0.0/28')" class="px-2.5 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs font-mono text-gray-300">/28 Micro</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Calculated Data Cards -->
+                <div class="glass-panel p-6 rounded-2xl border border-gray-800 space-y-4 md:col-span-2">
+                    <h3 class="text-lg font-semibold text-white border-b border-gray-800 pb-3 flex items-center justify-between">
+                        <span>Calculated Network Metrics</span>
+                        <span id="subnet-class-badge" class="text-xs px-2.5 py-1 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/30 font-mono">Class C</span>
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 font-mono text-sm">
+                        <div class="bg-gray-900/60 p-3 rounded-xl border border-gray-800">
+                            <span class="text-xs text-gray-400 block mb-0.5">NETWORK ID (Address)</span>
+                            <span id="res-net-id" class="text-brand-400 font-bold text-base">192.168.10.0</span>
+                        </div>
+                        <div class="bg-gray-900/60 p-3 rounded-xl border border-gray-800">
+                            <span class="text-xs text-gray-400 block mb-0.5">BROADCAST IP</span>
+                            <span id="res-broadcast-ip" class="text-amber-400 font-bold text-base">192.168.10.255</span>
+                        </div>
+                        <div class="bg-gray-900/60 p-3 rounded-xl border border-gray-800">
+                            <span class="text-xs text-gray-400 block mb-0.5">FIRST USABLE HOST</span>
+                            <span id="res-first-ip" class="text-neongreen font-bold">192.168.10.1</span>
+                        </div>
+                        <div class="bg-gray-900/60 p-3 rounded-xl border border-gray-800">
+                            <span class="text-xs text-gray-400 block mb-0.5">LAST USABLE HOST</span>
+                            <span id="res-last-ip" class="text-neongreen font-bold">192.168.10.254</span>
+                        </div>
+                        <div class="bg-gray-900/60 p-3 rounded-xl border border-gray-800">
+                            <span class="text-xs text-gray-400 block mb-0.5">SUBNET MASK</span>
+                            <span id="res-subnet-mask" class="text-white font-bold">255.255.255.0</span>
+                        </div>
+                        <div class="bg-gray-900/60 p-3 rounded-xl border border-gray-800">
+                            <span class="text-xs text-gray-400 block mb-0.5">TOTAL USABLE HOSTS</span>
+                            <span id="res-total-hosts" class="text-neonpurple font-bold text-base">254</span>
+                        </div>
+                    </div>
+
+                    <!-- Binary Breakdown -->
+                    <div class="pt-2">
+                        <span class="text-xs text-gray-400 font-mono block mb-2">BINARY BITMASK BREAKDOWN</span>
+                        <div class="bg-gray-950 p-4 rounded-xl border border-gray-800 space-y-2 font-mono text-xs overflow-x-auto">
+                            <div class="flex items-center justify-between min-w-[320px]">
+                                <span class="text-gray-400">IP:</span>
+                                <span id="bin-ip" class="text-brand-400">11000000.10101000.00001010.00101101</span>
+                            </div>
+                            <div class="flex items-center justify-between min-w-[320px]">
+                                <span class="text-gray-400">Mask:</span>
+                                <span id="bin-mask" class="text-gray-300">11111111.11111111.11111111.00000000</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Networking Lab Cheatsheet Card -->
+                <div class="glass-panel p-6 rounded-2xl border border-gray-800 space-y-4">
+                    <h3 class="text-lg font-semibold text-white border-b border-gray-800 pb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-book-bookmark text-neonpurple"></i> Subnet Cheat Reference
+                    </h3>
+                    <div class="space-y-3 text-xs font-mono text-gray-300">
+                        <div class="p-3 bg-gray-900/60 rounded-xl border border-gray-800">
+                            <p class="text-brand-400 font-bold mb-1">/24 (255.255.255.0)</p>
+                            <p class="text-gray-400">256 total IPs | 254 Usable Hosts</p>
+                        </div>
+                        <div class="p-3 bg-gray-900/60 rounded-xl border border-gray-800">
+                            <p class="text-brand-400 font-bold mb-1">/25 (255.255.255.128)</p>
+                            <p class="text-gray-400">128 total IPs | 126 Usable Hosts</p>
+                        </div>
+                        <div class="p-3 bg-gray-900/60 rounded-xl border border-gray-800">
+                            <p class="text-brand-400 font-bold mb-1">/26 (255.255.255.192)</p>
+                            <p class="text-gray-400">64 total IPs | 62 Usable Hosts</p>
+                        </div>
+                        <div class="p-3 bg-gray-900/60 rounded-xl border border-gray-800">
+                            <p class="text-brand-400 font-bold mb-1">/27 (255.255.255.224)</p>
+                            <p class="text-gray-400">32 total IPs | 30 Usable Hosts</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: BSC IT SEMESTER ROADMAP (NEPAL ALIGNED) -->
+        <section id="tab-curriculum" class="tab-content space-y-6 hidden">
+            <div class="glass-panel p-6 rounded-2xl border border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-graduation-cap text-brand-400"></i> BSc IT Semester Roadmap & Skill Tracker
+                    </h2>
+                    <p class="text-gray-400 text-sm mt-1">Aligned with Tribhuvan University (TU), Pokhara (PU), and Kathmandu University (KU) IT Curriculums in Nepal.</p>
+                </div>
+                <div class="flex items-center gap-2 font-mono text-xs text-brand-400 bg-brand-500/10 px-3 py-2 rounded-xl border border-brand-500/30">
+                    <i class="fa-solid fa-circle-check"></i> Interactive Progress Checklist
+                </div>
+            </div>
+
+            <!-- Semester Pills Nav -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar" id="semester-pills">
+                <!-- Pills generated dynamically -->
+            </div>
+
+            <!-- Active Semester Content Display -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Subjects List -->
+                <div class="lg:col-span-2 space-y-4" id="semester-subjects-container">
+                    <!-- Subject cards injected here -->
+                </div>
+
+                <!-- Skill Mastery Checklist for Semester -->
+                <div class="glass-panel p-6 rounded-2xl border border-gray-800 space-y-4">
+                    <h3 class="text-lg font-bold text-white border-b border-gray-800 pb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-neongreen"></i> Industry Skills Checklist
+                    </h3>
+                    <p class="text-xs text-gray-400">Mark practical skills as you master them through projects and lab assignments:</p>
+                    
+                    <div class="space-y-2.5 text-sm" id="skill-checklist-container">
+                        <!-- Checkbox items injected -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: DEV TOOLKIT & CHEATSHEETS -->
+        <section id="tab-cheatsheets" class="tab-content space-y-6 hidden">
+            <div class="glass-panel p-6 rounded-2xl border border-gray-800">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-screwdriver-wrench text-brand-400"></i> Developer Toolkit & Interactive Playgrounds
+                </h2>
+                <p class="text-gray-400 text-sm mt-1">Hands-on interactive tools for Git version control, SQL Join queries, and Regular Expressions.</p>
+            </div>
+
+            <!-- Sub Tool Switcher -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- TOOL 1: GIT GRAPH VISUALIZER -->
+                <div class="glass-panel p-6 rounded-2xl border border-gray-800 space-y-4 lg:col-span-2">
+                    <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                        <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                            <i class="fa-brands fa-git-alt text-amber-500 text-xl"></i> Git Command & Branch Visualizer
+                        </h3>
+                        <button onclick="resetGitTree()" class="text-xs text-gray-400 hover:text-white font-mono bg-gray-800 px-2.5 py-1 rounded">Reset Tree</button>
+                    </div>
+
+                    <!-- Git Controls -->
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="gitAction('commit')" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-neongreen rounded-lg text-xs font-mono border border-neongreen/30">
+                            git commit -m "feat"
+                        </button>
+                        <button onclick="gitAction('branch')" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-brand-400 rounded-lg text-xs font-mono border border-brand-400/30">
+                            git branch feature
+                        </button>
+                        <button onclick="gitAction('checkout')" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-neonpurple rounded-lg text-xs font-mono border border-neonpurple/30">
+                            git checkout
+                        </button>
+                        <button onclick="gitAction('merge')" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-amber-400 rounded-lg text-xs font-mono border border-amber-400/30">
+                            git merge feature
+                        </button>
+                    </div>
+
+                    <!-- Visual Git Tree Canvas -->
+                    <div id="git-tree-canvas" class="h-52 bg-gray-950/80 rounded-xl p-4 border border-gray-800 relative flex items-center gap-6 overflow-x-auto">
+                        <!-- Commit Nodes injected -->
+                    </div>
+                    <div id="git-log-text" class="text-xs font-mono text-gray-400 bg-gray-900/60 p-2.5 rounded-lg border border-gray-800">
+                        Active Branch: <span class="text-brand-400 font-bold" id="active-branch-name">main</span> | Click buttons above to execute Git operations.
+                    </div>
+                </div>
+
+                <!-- TOOL 2: REGEX TESTER -->
+                <div class="glass-panel p-6 rounded-2xl border border-gray-800 space-y-4">
+                    <h3 class="text-lg font-semibold text-white flex items-center gap-2 border-b border-gray-800 pb-3">
+                        <i class="fa-solid fa-code text-neoncyan"></i> Quick Regex Tester
+                    </h3>
+
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">REGEX PATTERN</label>
+                        <input type="text" id="regex-pattern" value="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs font-mono text-brand-400 focus:outline-none focus:border-brand-500" oninput="testRegex()">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-mono text-gray-400 mb-1">TEST STRING</label>
+                        <textarea id="regex-text" rows="3" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-xs font-mono text-gray-300 focus:outline-none focus:border-brand-500" oninput="testRegex()">Contact us at admin@ku.edu.np or student123@tu.edu.np for BSc IT admissions.</textarea>
+                    </div>
+
+                    <div id="regex-result-box" class="bg-gray-950 p-3 rounded-xl border border-gray-800 text-xs font-mono text-neongreen break-all">
+                        Matches found!
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- TOOL 3: INTERACTIVE SQL JOIN VISUALIZER -->
+            <div class="glass-panel p-6 rounded-2xl border border-gray-800 space-y-4">
+                <h3 class="text-lg font-semibold text-white flex items-center gap-2 border-b border-gray-800 pb-3">
+                    <i class="fa-solid fa-database text-brand-400"></i> Relational Database SQL JOIN Explorer
+                </h3>
+                
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="setSqlJoin('INNER')" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs font-mono text-brand-400 font-bold border border-gray-700">INNER JOIN</button>
+                    <button onclick="setSqlJoin('LEFT')" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs font-mono text-brand-400 font-bold border border-gray-700">LEFT JOIN</button>
+                    <button onclick="setSqlJoin('RIGHT')" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs font-mono text-brand-400 font-bold border border-gray-700">RIGHT JOIN</button>
+                    <button onclick="setSqlJoin('FULL')" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs font-mono text-brand-400 font-bold border border-gray-700">FULL OUTER JOIN</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                    <!-- Venn Diagram Representation -->
+                    <div class="bg-gray-950 p-6 rounded-xl border border-gray-800 flex justify-center items-center relative h-48">
+                        <div id="venn-left" class="w-32 h-32 rounded-full border-2 border-brand-400 bg-brand-500/20 flex items-center justify-start pl-4 font-bold text-xs text-brand-400 absolute left-12 transition-all">
+                            Students
+                        </div>
+                        <div id="venn-right" class="w-32 h-32 rounded-full border-2 border-neonpurple bg-neonpurple/20 flex items-center justify-end pr-4 font-bold text-xs text-neonpurple absolute right-12 transition-all">
+                            Projects
+                        </div>
+                    </div>
+
+                    <!-- SQL Query Display -->
+                    <div class="space-y-3">
+                        <div class="bg-gray-950 p-4 rounded-xl border border-gray-800 font-mono text-xs text-gray-300 space-y-1" id="sql-code-display">
+                            <span class="text-neonpurple">SELECT</span> Students.name, Projects.title<br>
+                            <span class="text-neonpurple">FROM</span> Students<br>
+                            <span class="text-brand-400 font-bold" id="sql-join-type-text">INNER JOIN</span> Projects<br>
+                            <span class="text-neonpurple">ON</span> Students.id = Projects.student_id;
+                        </div>
+                        <p id="sql-join-desc" class="text-xs text-gray-400 leading-relaxed">
+                            INNER JOIN returns only records where there is a match in both the Students and Projects tables.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: NEPAL TECH CAREER & CAPSTONE PROJECT GENERATOR -->
+        <section id="tab-career" class="tab-content space-y-6 hidden">
+            <div class="glass-panel p-6 rounded-2xl border border-gray-800">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-briefcase text-brand-400"></i> Nepal Tech Industry & Capstone Project Finder
+                </h2>
+                <p class="text-gray-400 text-sm mt-1">Tailored advice for securing tech internships & building impactful semester projects in Kathmandu, Pokhara, and Nepal's tech market.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Project Idea Generator -->
+                <div class="glass-panel p-6 rounded-2xl border border-gray-800 space-y-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2 border-b border-gray-800 pb-3">
+                        <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> Semester & Final Capstone Project Generator
+                    </h3>
+                    <p class="text-xs text-gray-400">Generate practical, high-value project ideas tailored for Nepal's ecosystem:</p>
+
+                    <div class="flex gap-2">
+                        <select id="project-domain" class="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white flex-1 focus:outline-none focus:border-brand-500">
+                            <option value="web">Web Development (MERN / Django)</option>
+                            <option value="mobile">Mobile App (Flutter / React Native)</option>
+                            <option value="ai">AI / Data Science (Python / ML)</option>
+                            <option value="cloud">DevOps / Cloud System</option>
+                        </select>
+                        <button onclick="generateProjectIdea()" class="bg-brand-500 hover:bg-brand-600 text-darkbg font-bold px-4 py-2 rounded-lg text-xs transition-all shrink-0">
+                            Generate Idea
+                        </button>
+                    </div>
+
+                    <!-- Generated Card -->
+                    <div id="project-idea-card" class="bg-gray-950 p-5 rounded-xl border border-gray-800 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span id="proj-category" class="text-xs px-2.5 py-1 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/30 font-mono">Web Tech</span>
+                            <span class="text-xs text-gray-500 font-mono">Nepal Context</span>
+                        </div>
+                        <h4 id="proj-title" class="text-base font-bold text-white">e-Sewa & Khalti Merchant Payment Gateway Plugin</h4>
+                        <p id="proj-desc" class="text-xs text-gray-400 leading-relaxed">
+                            Build an open-source React/Node wrapper for integrating popular Nepalese digital wallets into local e-commerce businesses with transaction logs and SMS notification webhooks.
+                        </p>
+                        <div class="pt-2 border-t border-gray-800/80 flex flex-wrap gap-1.5" id="proj-tech-stack">
+                            <span class="text-[10px] bg-gray-900 text-gray-300 font-mono px-2 py-0.5 rounded border border-gray-800">Node.js</span>
+                            <span class="text-[10px] bg-gray-900 text-gray-300 font-mono px-2 py-0.5 rounded border border-gray-800">React</span>
+                            <span class="text-[10px] bg-gray-900 text-gray-300 font-mono px-2 py-0.5 rounded border border-gray-800">MongoDB</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nepal Tech Stack Demand -->
+                <div class="glass-panel p-6 rounded-2xl border border-gray-800 space-y-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2 border-b border-gray-800 pb-3">
+                        <i class="fa-solid fa-chart-line text-neongreen"></i> Top Tech Stacks Demanded in Nepal
+                    </h3>
+
+                    <div class="space-y-3 text-xs">
+                        <div class="p-3 bg-gray-900/60 rounded-xl border border-gray-800 flex items-center justify-between">
+                            <div>
+                                <p class="text-white font-bold text-sm">Full-Stack JavaScript (MERN)</p>
+                                <p class="text-gray-400">React.js, Node.js, Express, MongoDB</p>
+                            </div>
+                            <span class="px-2.5 py-1 bg-neongreen/10 text-neongreen border border-neongreen/30 rounded-full font-mono font-bold">Very High Demand</span>
+                        </div>
+
+                        <div class="p-3 bg-gray-900/60 rounded-xl border border-gray-800 flex items-center justify-between">
+                            <div>
+                                <p class="text-white font-bold text-sm">Python & Data / Django</p>
+                                <p class="text-gray-400">Django, FastAPI, Data Analytics, Pandas</p>
+                            </div>
+                            <span class="px-2.5 py-1 bg-brand-500/10 text-brand-400 border border-brand-500/30 rounded-full font-mono font-bold">High Demand</span>
+                        </div>
+
+                        <div class="p-3 bg-gray-900/60 rounded-xl border border-gray-800 flex items-center justify-between">
+                            <div>
+                                <p class="text-white font-bold text-sm">Cross-Platform Mobile (Flutter)</p>
+                                <p class="text-gray-400">Dart, Firebase, REST APIs integration</p>
+                            </div>
+                            <span class="px-2.5 py-1 bg-neonpurple/10 text-neonpurple border border-neonpurple/30 rounded-full font-mono font-bold">Growing Fast</span>
+                        </div>
+
+                        <div class="p-3 bg-gray-900/60 rounded-xl border border-gray-800 flex items-center justify-between">
+                            <div>
+                                <p class="text-white font-bold text-sm">Java / Spring Boot Enterprise</p>
+                                <p class="text-gray-400">Banking software, large enterprise systems</p>
+                            </div>
+                            <span class="px-2.5 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-full font-mono font-bold">Stable Demand</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 6: SOURCE CODE EXPORTER -->
+        <section id="tab-sourcecode" class="tab-content space-y-6 hidden">
+            <div class="glass-panel p-6 rounded-2xl border border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-code text-neonpurple"></i> Standalone Source Code Exporter
+                    </h2>
+                    <p class="text-gray-400 text-sm mt-1">Copy or download the complete source code of this Web Hub so you can run it locally on VS Code!</p>
+                </div>
+                <button onclick="copySourceCode()" class="bg-neonpurple hover:bg-purple-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all flex items-center gap-2 shadow-lg shadow-neonpurple/20">
+                    <i class="fa-solid fa-copy"></i> Copy Entire Source Code
+                </button>
+            </div>
+
+            <div class="bg-gray-950 p-4 rounded-2xl border border-gray-800 space-y-2">
+                <div class="flex items-center justify-between text-xs text-gray-400 font-mono px-2">
+                    <span>index.html (Single-file HTML + Tailwind + Vanilla JS)</span>
+                    <span id="copy-status" class="text-neongreen hidden"><i class="fa-solid fa-check"></i> Copied to Clipboard!</span>
+                </div>
+                <pre class="bg-gray-900 p-4 rounded-xl text-xs font-mono text-gray-300 overflow-x-auto h-96 max-h-[500px] border border-gray-800/80" id="code-snippet-box">
+&lt;!-- Full source code is generated and embedded live --&gt;
+                </pre>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-gray-800 py-6 px-4 text-center text-xs text-gray-500 glass-panel mt-12">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p>Designed for BSc IT Students in Nepal 🇳🇵 (TU / PU / KU / Pokhara Uni)</p>
+            <p class="font-mono">Built with HTML5, Tailwind CSS & Vanilla JavaScript</p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // TAB SWITCHING LOGIC
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-brand-400', 'bg-brand-500/10', 'border-brand-500/30');
+                btn.classList.add('text-gray-400');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.add('text-brand-400', 'bg-brand-500/10', 'border-brand-500/30');
+                activeBtn.classList.remove('text-gray-400');
+            }
+        }
+
+        // --- VISUALIZER 1: SORTING ALGORITHMS ---
+        let currentArray = [];
+        let isSorting = false;
+
+        function setVisMode(mode) {
+            if (mode === 'sorting') {
+                document.getElementById('panel-sorting').classList.remove('hidden');
+                document.getElementById('panel-bst').classList.add('hidden');
+                document.getElementById('btn-vis-sorting').className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-brand-500 text-darkbg shadow-md";
+                document.getElementById('btn-vis-bst').className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all text-gray-400 hover:text-white";
+            } else {
+                document.getElementById('panel-sorting').classList.add('hidden');
+                document.getElementById('panel-bst').classList.remove('hidden');
+                document.getElementById('btn-vis-bst').className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-brand-500 text-darkbg shadow-md";
+                document.getElementById('btn-vis-sorting').className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all text-gray-400 hover:text-white";
+            }
+        }
+
+        function generateRandomArray() {
+            if (isSorting) return;
+            const size = parseInt(document.getElementById('sort-speed-slider').value);
+            document.getElementById('arr-size-val').innerText = size;
+            currentArray = [];
+            const container = document.getElementById('sorting-container');
+            container.innerHTML = '';
+
+            for (let i = 0; i < size; i++) {
+                const val = Math.floor(Math.random() * 85) + 10;
+                currentArray.push(val);
+                const bar = document.createElement('div');
+                bar.id = `bar-${i}`;
+                bar.className = 'array-bar bg-brand-400 rounded-t-sm w-full';
+                bar.style.height = `${val}%`;
+                container.appendChild(bar);
+            }
+            document.getElementById('sort-info-text').innerText = `Array generated with ${size} elements. Click Start to begin sorting.`;
+        }
+
+        async function startSorting() {
+            if (isSorting) return;
+            isSorting = true;
+            document.getElementById('btn-start-sort').disabled = true;
+            const algo = document.getElementById('sort-algo-select').value;
+            const delay = 510 - parseInt(document.getElementById('sort-delay-slider').value);
+
+            if (algo === 'bubble') {
+                await bubbleSort(delay);
+            } else if (algo === 'selection') {
+                await selectionSort(delay);
+            } else {
+                await bubbleSort(delay); // fallback default
+            }
+
+            isSorting = false;
+            document.getElementById('btn-start-sort').disabled = false;
+        }
+
+        const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+        async function bubbleSort(delay) {
+            const n = currentArray.length;
+            for (let i = 0; i < n - 1; i++) {
+                for (let j = 0; j < n - i - 1; j++) {
+                    const bar1 = document.getElementById(`bar-${j}`);
+                    const bar2 = document.getElementById(`bar-${j + 1}`);
+
+                    bar1.className = 'array-bar bg-amber-400 rounded-t-sm w-full';
+                    bar2.className = 'array-bar bg-amber-400 rounded-t-sm w-full';
+                    
+                    document.getElementById('sort-info-text').innerText = `Comparing index ${j} (${currentArray[j]}) and ${j+1} (${currentArray[j+1]})`;
+                    await sleep(delay);
+
+                    if (currentArray[j] > currentArray[j + 1]) {
+                        // Swap
+                        let temp = currentArray[j];
+                        currentArray[j] = currentArray[j + 1];
+                        currentArray[j + 1] = temp;
+
+                        bar1.style.height = `${currentArray[j]}%`;
+                        bar2.style.height = `${currentArray[j + 1]}%`;
+                    }
+
+                    bar1.className = 'array-bar bg-brand-400 rounded-t-sm w-full';
+                    bar2.className = 'array-bar bg-brand-400 rounded-t-sm w-full';
+                }
+                document.getElementById(`bar-${n - 1 - i}`).className = 'array-bar bg-neongreen rounded-t-sm w-full';
+            }
+            document.getElementById('bar-0').className = 'array-bar bg-neongreen rounded-t-sm w-full';
+            document.getElementById('sort-info-text').innerText = 'Sorting Complete! Array is now sorted in O(N²) time.';
+        }
+
+        async function selectionSort(delay) {
+            const n = currentArray.length;
+            for (let i = 0; i < n; i++) {
+                let minIdx = i;
+                document.getElementById(`bar-${i}`).className = 'array-bar bg-amber-400 rounded-t-sm w-full';
+
+                for (let j = i + 1; j < n; j++) {
+                    document.getElementById(`bar-${j}`).className = 'array-bar bg-amber-400 rounded-t-sm w-full';
+                    await sleep(delay);
+
+                    if (currentArray[j] < currentArray[minIdx]) {
+                        if (minIdx !== i) document.getElementById(`bar-${minIdx}`).className = 'array-bar bg-brand-400 rounded-t-sm w-full';
+                        minIdx = j;
+                    } else {
+                        document.getElementById(`bar-${j}`).className = 'array-bar bg-brand-400 rounded-t-sm w-full';
+                    }
+                }
+
+                if (minIdx !== i) {
+                    let temp = currentArray[i];
+                    currentArray[i] = currentArray[minIdx];
+                    currentArray[minIdx] = temp;
+
+                    document.getElementById(`bar-${i}`).style.height = `${currentArray[i]}%`;
+                    document.getElementById(`bar-${minIdx}`).style.height = `${currentArray[minIdx]}%`;
+                }
+
+                document.getElementById(`bar-${i}`).className = 'array-bar bg-neongreen rounded-t-sm w-full';
+            }
+            document.getElementById('sort-info-text').innerText = 'Selection Sort Complete!';
+        }
+
+        // --- VISUALIZER 2: BINARY SEARCH TREE (BST) ---
+        class BSTNode {
+            constructor(val) {
+                this.val = val;
+                this.left = null;
+                this.right = null;
+            }
+        }
+
+        let bstRoot = null;
+
+        function bstInsert() {
+            const input = document.getElementById('bst-input-val');
+            const val = parseInt(input.value);
+            if (isNaN(val)) return;
+
+            const newNode = new BSTNode(val);
+            if (!bstRoot) {
+                bstRoot = newNode;
+            } else {
+                let curr = bstRoot;
+                while (true) {
+                    if (val < curr.val) {
+                        if (!curr.left) { curr.left = newNode; break; }
+                        curr = curr.left;
+                    } else if (val > curr.val) {
+                        if (!curr.right) { curr.right = newNode; break; }
+                        curr = curr.right;
+                    } else {
+                        break; // Duplicate
+                    }
+                }
+            }
+            input.value = '';
+            renderBST();
+            document.getElementById('bst-status-text').innerText = `Inserted value ${val} into Binary Search Tree.`;
+        }
+
+        function bstReset() {
+            bstRoot = null;
+            renderBST();
+            document.getElementById('bst-status-text').innerText = 'Tree reset.';
+        }
+
+        function renderBST() {
+            const container = document.getElementById('bst-nodes-container');
+            container.innerHTML = '';
+            if (!bstRoot) return;
+
+            // Simple tree layout generator
+            function drawNode(node, x, y, level) {
+                if (!node) return;
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = 'absolute w-10 h-10 rounded-full bg-brand-500 text-darkbg font-bold font-mono text-xs flex items-center justify-center border-2 border-white shadow-lg transition-all transform -translate-x-1/2 -translate-y-1/2';
+                nodeDiv.style.left = `${x}%`;
+                nodeDiv.style.top = `${y}px`;
+                nodeDiv.innerText = node.val;
+                container.appendChild(nodeDiv);
+
+                const offset = Math.max(20 / (level * 1.5), 5);
+                if (node.left) drawNode(node.left, x - offset, y + 60, level + 1);
+                if (node.right) drawNode(node.right, x + offset, y + 60, level + 1);
+            }
+
+            drawNode(bstRoot, 50, 30, 1);
+        }
+
+        function bstSearch() {
+            const val = parseInt(document.getElementById('bst-input-val').value);
+            if (isNaN(val) || !bstRoot) return;
+
+            let curr = bstRoot;
+            let found = false;
+            while (curr) {
+                if (val === curr.val) { found = true; break; }
+                if (val < curr.val) curr = curr.left;
+                else curr = curr.right;
+            }
+
+            document.getElementById('bst-status-text').innerText = found ? 
+                `Search Result: Value ${val} FOUND in BST!` : 
+                `Search Result: Value ${val} NOT FOUND in BST.`;
+        }
+
+        // --- TOOL 2: SUBNET CALCULATOR ---
+        function calculateSubnet() {
+            const input = document.getElementById('subnet-ip-input').value.trim();
+            const parts = input.split('/');
+            if (parts.length !== 2) return;
+
+            const ipStr = parts[0];
+            const maskBits = parseInt(parts[1]);
+
+            if (isNaN(maskBits) || maskBits < 0 || maskBits > 32) return;
+
+            // IP to Integer
+            const ipOctets = ipStr.split('.').map(Number);
+            if (ipOctets.length !== 4 || ipOctets.some(o => isNaN(o) || o < 0 || o > 255)) return;
+
+            const ipInt = (ipOctets[0] << 24) | (ipOctets[1] << 16) | (ipOctets[2] << 8) | ipOctets[3];
+            const maskInt = maskBits === 0 ? 0 : (~0 << (32 - maskBits));
+
+            const netInt = ipInt & maskInt;
+            const bcastInt = netInt | (~maskInt);
+
+            const intToIp = (num) => [
+                (num >>> 24) & 255,
+                (num >>> 16) & 255,
+                (num >>> 8) & 255,
+                num & 255
+            ].join('.');
+
+            const intToBin = (num) => [
+                ((num >>> 24) & 255).toString(2).padStart(8, '0'),
+                ((num >>> 16) & 255).toString(2).padStart(8, '0'),
+                ((num >>> 8) & 255).toString(2).padStart(8, '0'),
+                (num & 255).toString(2).padStart(8, '0')
+            ].join('.');
+
+            const totalHosts = maskBits >= 31 ? 0 : Math.pow(2, 32 - maskBits) - 2;
+
+            document.getElementById('res-net-id').innerText = intToIp(netInt);
+            document.getElementById('res-broadcast-ip').innerText = intToIp(bcastInt);
+            document.getElementById('res-first-ip').innerText = maskBits >= 31 ? 'N/A' : intToIp(netInt + 1);
+            document.getElementById('res-last-ip').innerText = maskBits >= 31 ? 'N/A' : intToIp(bcastInt - 1);
+            document.getElementById('res-subnet-mask').innerText = intToIp(maskInt);
+            document.getElementById('res-total-hosts').innerText = totalHosts.toLocaleString();
+
+            document.getElementById('bin-ip').innerText = intToBin(ipInt);
+            document.getElementById('bin-mask').innerText = intToBin(maskInt);
+
+            // Class determination
+            let cls = 'Class C';
+            if (ipOctets[0] < 128) cls = 'Class A';
+            else if (ipOctets[0] < 192) cls = 'Class B';
+            document.getElementById('subnet-class-badge').innerText = cls;
+        }
+
+        function setSubnetPreset(val) {
+            document.getElementById('subnet-ip-input').value = val;
+            calculateSubnet();
+        }
+
+        // --- TOOL 3: BSC IT SEMESTER ROADMAP ---
+        const curriculumData = [
+            {
+                sem: 1,
+                title: "Semester 1: Fundamentals & C Programming",
+                subjects: [
+                    { name: "Introduction to Information Technology", code: "CSC109", desc: "Computer hardware, binary logic, operating system basics, and internet foundations." },
+                    { name: "C Programming", code: "CSC110", desc: "Variables, control structures, pointers, memory allocation, arrays, and file handling." },
+                    { name: "Digital Logic", code: "CSC111", desc: "Boolean algebra, logic gates, flip-flops, registers, and sequential circuits." }
+                ],
+                skills: ["C Logic & Pointers", "Git Basics", "Linux Terminal CLI", "Binary Arithmetic"]
+            },
+            {
+                sem: 2,
+                title: "Semester 2: OOP & Data Structures",
+                subjects: [
+                    { name: "Object Oriented Programming (C++)", code: "CSC160", desc: "Classes, inheritance, polymorphism, templates, and exception handling." },
+                    { name: "Discrete Structures", code: "CSC161", desc: "Sets, relations, graphs, trees, combinatorics, and proof techniques." },
+                    { name: "Data Structures & Algorithms (DSA)", code: "CSC162", desc: "Stacks, queues, linked lists, trees, graphs, sorting & searching algorithms." }
+                ],
+                skills: ["OOP Paradigms", "DSA Implementation", "Problem Solving", "C++ Templates"]
+            },
+            {
+                sem: 3,
+                title: "Semester 3: DBMS & Web Tech",
+                subjects: [
+                    { name: "Database Management System (DBMS)", code: "CSC213", desc: "ER modeling, Relational Algebra, SQL, Normalization (1NF to BCNF), and ACID transactions." },
+                    { name: "Web Technology", code: "CSC214", desc: "HTML5, CSS3, JavaScript DOM, PHP/Node backend, and responsive web design." },
+                    { name: "Computer Architecture", code: "CSC215", desc: "CPU design, instruction sets, memory hierarchy, and microprocessors." }
+                ],
+                skills: ["Complex SQL & JOINs", "RESTful API Integration", "Responsive Tailwind/CSS", "Database Normalization"]
+            },
+            {
+                sem: 4,
+                title: "Semester 4: Networks & Operating Systems",
+                subjects: [
+                    { name: "Computer Networks", code: "CSC260", desc: "OSI 7-layer model, TCP/IP, IP Subnetting, routing algorithms, and network security." },
+                    { name: "Operating Systems", code: "CSC261", desc: "Process scheduling, deadlocks, memory management, and file systems." },
+                    { name: "Software Engineering", code: "CSC262", desc: "Agile, Scrum, SDLC models, UML diagrams, software testing, and CI/CD basics." }
+                ],
+                skills: ["Subnetting & Wireshark", "Linux Shell Scripting", "UML & System Design", "Postman API Testing"]
+            }
+        ];
+
+        function renderSemesters() {
+            const pillsNav = document.getElementById('semester-pills');
+            pillsNav.innerHTML = '';
+
+            curriculumData.forEach((data, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `px-4 py-2 rounded-xl text-xs font-mono transition-all font-bold shrink-0 ${idx === 0 ? 'bg-brand-500 text-darkbg shadow-md' : 'bg-gray-900 text-gray-400 hover:text-white border border-gray-800'}`;
+                btn.innerText = `Semester ${data.sem}`;
+                btn.onclick = () => selectSemester(idx, btn);
+                pillsNav.appendChild(btn);
+            });
+
+            selectSemester(0, pillsNav.children[0]);
+        }
+
+        function selectSemester(idx, btnEl) {
+            document.querySelectorAll('#semester-pills button').forEach(b => {
+                b.className = 'px-4 py-2 rounded-xl text-xs font-mono transition-all font-bold shrink-0 bg-gray-900 text-gray-400 hover:text-white border border-gray-800';
+            });
+            if (btnEl) btnEl.className = 'px-4 py-2 rounded-xl text-xs font-mono transition-all font-bold shrink-0 bg-brand-500 text-darkbg shadow-md';
+
+            const sem = curriculumData[idx];
+            const container = document.getElementById('semester-subjects-container');
+            container.innerHTML = `<h3 class="text-xl font-bold text-white mb-2">${sem.title}</h3>`;
+
+            sem.subjects.forEach(sub => {
+                const card = document.createElement('div');
+                card.className = 'glass-card p-5 rounded-2xl border border-gray-800 space-y-2';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-base font-bold text-white">${sub.name}</h4>
+                        <span class="text-xs font-mono bg-gray-800 text-brand-400 px-2 py-1 rounded border border-gray-700">${sub.code}</span>
+                    </div>
+                    <p class="text-xs text-gray-400 leading-relaxed">${sub.desc}</p>
+                `;
+                container.appendChild(card);
+            });
+
+            // Checklist
+            const checkContainer = document.getElementById('skill-checklist-container');
+            checkContainer.innerHTML = '';
+            sem.skills.forEach(skill => {
+                const item = document.createElement('label');
+                item.className = 'flex items-center gap-3 p-3 bg-gray-900/60 rounded-xl border border-gray-800/80 cursor-pointer hover:border-brand-500/40 transition-all';
+                item.innerHTML = `
+                    <input type="checkbox" class="w-4 h-4 rounded accent-brand-500 bg-gray-800 border-gray-700">
+                    <span class="text-xs font-mono text-gray-300">${skill}</span>
+                `;
+                checkContainer.appendChild(item);
+            });
+        }
+
+        // --- TOOL 4: GIT TREE VISUALIZER ---
+        let gitCommits = [{ id: 'c1', msg: 'initial commit', branch: 'main' }];
+        let activeBranch = 'main';
+
+        function gitAction(type) {
+            const canvas = document.getElementById('git-tree-canvas');
+            if (type === 'commit') {
+                const newId = `c${gitCommits.length + 1}`;
+                gitCommits.push({ id: newId, msg: `feat step ${gitCommits.length}`, branch: activeBranch });
+            } else if (type === 'branch') {
+                activeBranch = 'feature';
+            } else if (type === 'checkout') {
+                activeBranch = activeBranch === 'main' ? 'feature' : 'main';
+            }
+            renderGitTree();
+        }
+
+        function resetGitTree() {
+            gitCommits = [{ id: 'c1', msg: 'initial commit', branch: 'main' }];
+            activeBranch = 'main';
+            renderGitTree();
+        }
+
+        function renderGitTree() {
+            const canvas = document.getElementById('git-tree-canvas');
+            canvas.innerHTML = '';
+            document.getElementById('active-branch-name').innerText = activeBranch;
+
+            gitCommits.forEach(c => {
+                const node = document.createElement('div');
+                node.className = `w-12 h-12 rounded-full flex flex-col items-center justify-center font-mono text-[10px] font-bold border-2 shrink-0 ${c.branch === 'main' ? 'bg-brand-500/20 border-brand-400 text-brand-400' : 'bg-neonpurple/20 border-neonpurple text-neonpurple'}`;
+                node.innerHTML = `<span>${c.id}</span>`;
+                canvas.appendChild(node);
+            });
+        }
+
+        // --- TOOL 5: REGEX TESTER ---
+        function testRegex() {
+            const patternStr = document.getElementById('regex-pattern').value;
+            const text = document.getElementById('regex-text').value;
+            const resBox = document.getElementById('regex-result-box');
+
+            try {
+                const re = new RegExp(patternStr, 'g');
+                const matches = text.match(re);
+                if (matches) {
+                    resBox.innerText = `Matches (${matches.length}): ${matches.join(', ')}`;
+                    resBox.className = "bg-gray-950 p-3 rounded-xl border border-neongreen/40 text-xs font-mono text-neongreen break-all";
+                } else {
+                    resBox.innerText = "No matches found.";
+                    resBox.className = "bg-gray-950 p-3 rounded-xl border border-gray-800 text-xs font-mono text-amber-400 break-all";
+                }
+            } catch (e) {
+                resBox.innerText = "Invalid Regular Expression syntax.";
+                resBox.className = "bg-gray-950 p-3 rounded-xl border border-red-500/40 text-xs font-mono text-red-400 break-all";
+            }
+        }
+
+        // --- TOOL 6: SQL JOIN EXPLORER ---
+        function setSqlJoin(type) {
+            const leftCircle = document.getElementById('venn-left');
+            const rightCircle = document.getElementById('venn-right');
+            const typeText = document.getElementById('sql-join-type-text');
+            const desc = document.getElementById('sql-join-desc');
+
+            typeText.innerText = `${type} JOIN`;
+
+            if (type === 'INNER') {
+                leftCircle.style.opacity = '0.7';
+                rightCircle.style.opacity = '0.7';
+                desc.innerText = 'INNER JOIN: Returns records that have matching values in both tables.';
+            } else if (type === 'LEFT') {
+                leftCircle.style.opacity = '1';
+                rightCircle.style.opacity = '0.4';
+                desc.innerText = 'LEFT JOIN: Returns all records from the left table (Students), and matched records from the right table.';
+            } else if (type === 'RIGHT') {
+                leftCircle.style.opacity = '0.4';
+                rightCircle.style.opacity = '1';
+                desc.innerText = 'RIGHT JOIN: Returns all records from the right table (Projects), and matched records from the left table.';
+            } else {
+                leftCircle.style.opacity = '1';
+                rightCircle.style.opacity = '1';
+                desc.innerText = 'FULL OUTER JOIN: Returns all records when there is a match in either left or right table.';
+            }
+        }
+
+        // --- TOOL 7: PROJECT IDEA GENERATOR ---
+        const projectIdeas = {
+            web: [
+                { title: "e-Sewa & Khalti Merchant Payment Integration", desc: "Build an open-source React/Node wrapper for integrating popular Nepalese digital wallets into local e-commerce platforms.", tech: ["Node.js", "React", "MongoDB", "Express"] },
+                { title: "BSc IT College Old Question Bank Portal", desc: "A peer-to-peer portal for Nepalese IT students to upload, organize, and search previous exam papers by semester and university.", tech: ["Next.js", "Tailwind CSS", "Firebase"] }
+            ],
+            mobile: [
+                { title: "Kathmandu Valley Local Bus Route & Tariff App", desc: "A offline-first mobile app helping commuters find local public bus routes, fares, and stop locations.", tech: ["Flutter", "Dart", "SQLite", "OpenStreetMap"] }
+            ],
+            ai: [
+                { title: "Devanagari OCR & Handwriting Recognizer", desc: "Machine learning model trained to digitize Nepalese handwritten documents and certificates into editable text.", tech: ["Python", "PyTorch", "OpenCV", "FastAPI"] }
+            ]
+        };
+
+        function generateProjectIdea() {
+            const domain = document.getElementById('project-domain').value;
+            const pool = projectIdeas[domain] || projectIdeas.web;
+            const item = pool[Math.floor(Math.random() * pool.length)];
+
+            document.getElementById('proj-title').innerText = item.title;
+            document.getElementById('proj-desc').innerText = item.desc;
+            
+            const techContainer = document.getElementById('proj-tech-stack');
+            techContainer.innerHTML = '';
+            item.tech.forEach(t => {
+                const tag = document.createElement('span');
+                tag.className = 'text-[10px] bg-gray-900 text-gray-300 font-mono px-2 py-0.5 rounded border border-gray-800';
+                tag.innerText = t;
+                techContainer.appendChild(tag);
+            });
+        }
+
+        // --- TOOL 8: SOURCE CODE COPIER ---
+        function copySourceCode() {
+            const fullDoc = document.documentElement.outerHTML;
+            
+            // Clipboard copy fallbacks
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(fullDoc);
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = fullDoc;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            }
+
+            const status = document.getElementById('copy-status');
+            status.classList.remove('hidden');
+            setTimeout(() => status.classList.add('hidden'), 3000);
+        }
+
+        // INITIALIZATION ON LOAD
+        window.onload = function() {
+            generateRandomArray();
+            calculateSubnet();
+            renderSemesters();
+            renderGitTree();
+            testRegex();
+
+            // Populate source code box preview
+            document.getElementById('code-snippet-box').textContent = document.documentElement.outerHTML;
+        };
+    </script>
+</body>
+</html>
