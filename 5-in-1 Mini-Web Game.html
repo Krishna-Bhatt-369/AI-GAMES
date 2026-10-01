@@ -1,0 +1,2017 @@
+<!-- I love experimenting with different AI's capabilities! I am trying to do is, i aldo dont knwo that :(. It sounds foolish but it is fun doing this. -->
+
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Arcade Realm - 5-in-1 Mini-Web Game Collection</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts for Retro, Sci-Fi, and Fantasy Themes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;600;700;900&family=Orbitron:wght@500;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    /* Font Utilities */
+    .font-arcade { font-family: 'Press Start 2P', monospace; }
+    .font-scifi { font-family: 'Orbitron', sans-serif; }
+    .font-fantasy { font-family: 'Cinzel', serif; }
+    .font-sans { font-family: 'Inter', sans-serif; }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    /* Glow Effects */
+    .glow-cyan { box-shadow: 0 0 15px rgba(6, 182, 212, 0.6); }
+    .glow-pink { box-shadow: 0 0 15px rgba(236, 72, 153, 0.6); }
+    .glow-gold { box-shadow: 0 0 15px rgba(234, 179, 8, 0.6); }
+    .glow-green { box-shadow: 0 0 15px rgba(34, 197, 94, 0.6); }
+
+    /* Canvas styling */
+    canvas { display: block; touch-action: none; }
+
+    /* Parchment Theme for Lost Realm */
+    .parchment-bg {
+      background: #f4ecd8;
+      background-image: radial-gradient(#e5d7b7 1px, transparent 0);
+      background-size: 16px 16px;
+      color: #2c1a0e;
+    }
+
+    /* GridShift Tile Animations */
+    .tile-transition {
+      transition: transform 120ms ease-in-out, background-color 120ms ease-in-out;
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      70% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop { animation: popIn 150ms ease-out forwards; }
+
+    /* Retro Pixel Border for RPG */
+    .pixel-border {
+      box-shadow: 0 -4px #1e293b, 0 4px #1e293b, -4px 0 #1e293b, 4px 0 #1e293b;
+    }
+
+    /* Prevent text selection during action games */
+    .no-select {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans antialiased text-slate-100 bg-slate-950 overflow-x-hidden no-select">
+
+  <!-- TOP NAVIGATION HEADER -->
+  <header class="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-lg">
+    <div class="max-w-7xl mx-auto px-2 sm:px-4 h-16 flex items-center justify-between gap-2">
+      
+      <!-- Brand / Logo -->
+      <a href="#hub" onclick="switchTab('hub')" class="flex items-center gap-2 group">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-pink-500 flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition-transform">
+          <i class="fa-solid font-bold fa-gamepad text-lg"></i>
+        </div>
+        <span class="font-scifi font-bold text-base sm:text-lg tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-indigo-300 to-pink-400 hidden sm:inline">
+          ARCADE<span class="text-xs text-cyan-400 ml-1 font-mono">5-in-1</span>
+        </span>
+      </a>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center gap-1 sm:gap-2 overflow-x-auto py-1 scrollbar-none">
+        <button onclick="switchTab('hub')" id="tab-hub" class="nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-all bg-slate-800 text-cyan-400 border border-slate-700">
+          <i class="fa-solid fa-house"></i>
+          <span class="hidden md:inline">Hub</span>
+        </button>
+
+        <button onclick="switchTab('action')" id="tab-action" class="nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-pink-400 hover:bg-slate-800/60">
+          <i class="fa-solid fa-bolt text-pink-400"></i>
+          <span class="hidden lg:inline">Hyperdash</span>
+        </button>
+
+        <button onclick="switchTab('puzzle')" id="tab-puzzle" class="nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-emerald-400 hover:bg-slate-800/60">
+          <i class="fa-solid fa-shapes text-emerald-400"></i>
+          <span class="hidden lg:inline">GridShift</span>
+        </button>
+
+        <button onclick="switchTab('adventure')" id="tab-adventure" class="nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-amber-400 hover:bg-slate-800/60">
+          <i class="fa-solid fa-book-bookmark text-amber-400"></i>
+          <span class="hidden lg:inline">Lost Realm</span>
+        </button>
+
+        <button onclick="switchTab('strategy')" id="tab-strategy" class="nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-blue-400 hover:bg-slate-800/60">
+          <i class="fa-solid fa-shield-halved text-blue-400"></i>
+          <span class="hidden lg:inline">Tower Defense</span>
+        </button>
+
+        <button onclick="switchTab('rpg')" id="tab-rpg" class="nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-all text-slate-400 hover:text-purple-400 hover:bg-slate-800/60">
+          <i class="fa-solid fa-dragon text-purple-400"></i>
+          <span class="hidden lg:inline">Dungeon Quest</span>
+        </button>
+      </nav>
+
+      <!-- Audio Toggle & Reset -->
+      <div class="flex items-center gap-2">
+        <button id="audio-btn" onclick="toggleAudio()" class="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 transition" title="Toggle Sound Synth Effects">
+          <i id="audio-icon" class="fa-solid fa-volume-high text-cyan-400"></i>
+        </button>
+        <button onclick="resetAllScores()" class="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-rose-400 hover:bg-slate-700 transition" title="Reset High Scores">
+          <i class="fa-solid fa-rotate-left"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-2 sm:p-4 flex flex-col justify-center">
+
+    <!-- VIEW 0: HUB MENU -->
+    <section id="view-hub" class="game-view w-full py-4 space-y-6">
+      
+      <!-- Welcome Banner -->
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-slate-800 p-6 md:p-8 text-center shadow-2xl">
+        <div class="absolute -top-24 -left-24 w-60 h-60 bg-cyan-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-24 -right-24 w-60 h-60 bg-pink-500/10 rounded-full blur-3xl"></div>
+        
+        <h1 class="text-3xl md:text-5xl font-scifi font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-indigo-200 to-pink-400 tracking-wider mb-3">
+          MINI-GAME ARCADE
+        </h1>
+        <p class="text-slate-300 text-sm md:text-base max-w-2xl mx-auto font-sans">
+          Choose from 5 complete full-featured browser games across 5 distinct genres. Compete for high scores with real-time sound synthesis, particle visual effects, and fluid control design!
+        </p>
+
+        <!-- Global Score Summary -->
+        <div class="mt-6 inline-flex flex-wrap items-center justify-center gap-3 sm:gap-6 bg-slate-900/80 backdrop-blur-sm border border-slate-700/60 rounded-xl px-4 py-3 text-xs sm:text-sm">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-trophy text-amber-400"></i>
+            <span class="text-slate-400">Total High Scores:</span>
+            <span id="hub-total-score" class="font-bold text-cyan-400 font-mono">0</span>
+          </div>
+          <div class="w-px h-4 bg-slate-700 hidden sm:block"></div>
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-gamepad text-indigo-400"></i>
+            <span class="text-slate-400">Games Unlocked:</span>
+            <span class="font-bold text-emerald-400 font-mono">5 / 5</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        
+        <!-- Game 1: Hyperdash Card -->
+        <div class="group relative rounded-2xl bg-slate-900/90 border border-pink-500/30 hover:border-pink-500/80 p-5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-pink-500/10">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-pink-500/10 text-pink-400 border border-pink-500/20">
+                Action
+              </span>
+              <div class="text-xs text-slate-400 flex items-center gap-1 font-mono">
+                <i class="fa-solid fa-crown text-amber-400"></i> Best: <span id="hub-score-action" class="text-slate-200 font-bold">0</span>
+              </div>
+            </div>
+            <h3 class="text-xl font-scifi font-bold text-slate-100 flex items-center gap-2">
+              <i class="fa-solid fa-bolt text-pink-400"></i> Hyperdash
+            </h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Cyberpunk endless runner! Pilot a neon energy craft, dodge falling laser obstacles, collect shield matrix powerups, and test your reaction speed at 60 FPS.
+            </p>
+          </div>
+          <button onclick="switchTab('action')" class="mt-5 w-full py-2.5 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold text-sm tracking-wide shadow-lg shadow-pink-600/20 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-play text-xs"></i> Play Action
+          </button>
+        </div>
+
+        <!-- Game 2: GridShift Card -->
+        <div class="group relative rounded-2xl bg-slate-900/90 border border-emerald-500/30 hover:border-emerald-500/80 p-5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                Puzzle
+              </span>
+              <div class="text-xs text-slate-400 flex items-center gap-1 font-mono">
+                <i class="fa-solid fa-crown text-amber-400"></i> Best: <span id="hub-score-puzzle" class="text-slate-200 font-bold">0</span>
+              </div>
+            </div>
+            <h3 class="text-xl font-scifi font-bold text-slate-100 flex items-center gap-2">
+              <i class="fa-solid fa-shapes text-emerald-400"></i> GridShift
+            </h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Minimalist pastel sliding tile merger. Slide numbered tiles across a 4x4 matrix, combine matching colors, utilize undo moves, and aim for the 2048 tile!
+            </p>
+          </div>
+          <button onclick="switchTab('puzzle')" class="mt-5 w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm tracking-wide shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-play text-xs"></i> Play Puzzle
+          </button>
+        </div>
+
+        <!-- Game 3: Lost Realm Card -->
+        <div class="group relative rounded-2xl bg-slate-900/90 border border-amber-500/30 hover:border-amber-500/80 p-5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/10">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                Adventure
+              </span>
+              <div class="text-xs text-slate-400 flex items-center gap-1 font-mono">
+                <i class="fa-solid fa-crown text-amber-400"></i> Best Gold: <span id="hub-score-adventure" class="text-slate-200 font-bold">0</span>
+              </div>
+            </div>
+            <h3 class="text-xl font-fantasy font-bold text-slate-100 flex items-center gap-2">
+              <i class="fa-solid fa-book-bookmark text-amber-400"></i> Lost Realm
+            </h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Rich interactive story set in Eldoria. Manage inventory items, make crucial narrative decisions, experience dynamic canvas landscapes, and unlock 4 distinct endings.
+            </p>
+          </div>
+          <button onclick="switchTab('adventure')" class="mt-5 w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold text-sm tracking-wide shadow-lg shadow-amber-600/20 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-play text-xs"></i> Play Adventure
+          </button>
+        </div>
+
+        <!-- Game 4: Tower Defense Card -->
+        <div class="group relative rounded-2xl bg-slate-900/90 border border-blue-500/30 hover:border-blue-500/80 p-5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/10">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                Strategy
+              </span>
+              <div class="text-xs text-slate-400 flex items-center gap-1 font-mono">
+                <i class="fa-solid fa-crown text-amber-400"></i> Max Wave: <span id="hub-score-strategy" class="text-slate-200 font-bold">0</span>
+              </div>
+            </div>
+            <h3 class="text-xl font-scifi font-bold text-slate-100 flex items-center gap-2">
+              <i class="fa-solid fa-shield-halved text-blue-400"></i> Tower Defense
+            </h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Tactical sci-fi command center defense. Place laser, plasma, and cryo towers along winding paths, upgrade core defenses, manage energy credits, and defeat boss drones!
+            </p>
+          </div>
+          <button onclick="switchTab('strategy')" class="mt-5 w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold text-sm tracking-wide shadow-lg shadow-blue-600/20 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-play text-xs"></i> Play Strategy
+          </button>
+        </div>
+
+        <!-- Game 5: Dungeon Quest Card -->
+        <div class="group relative rounded-2xl bg-slate-900/90 border border-purple-500/30 hover:border-purple-500/80 p-5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-500/10">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                RPG
+              </span>
+              <div class="text-xs text-slate-400 flex items-center gap-1 font-mono">
+                <i class="fa-solid fa-crown text-amber-400"></i> Deepest Floor: <span id="hub-score-rpg" class="text-slate-200 font-bold">0</span>
+              </div>
+            </div>
+            <h3 class="text-xl font-arcade font-bold text-purple-300 flex items-center gap-2 text-sm">
+              <i class="fa-solid fa-dragon text-purple-400"></i> Dungeon Quest
+            </h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Turn-based 8-bit dungeon crawler. Battle monsters, cast elemental spells, visit post-combat merchants, level up your hero, and challenge the Shadow Overlord!
+            </p>
+          </div>
+          <button onclick="switchTab('rpg')" class="mt-5 w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-sm tracking-wide shadow-lg shadow-purple-600/20 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-play text-xs"></i> Play RPG
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- VIEW 1: HYPERDASH (ACTION) -->
+    <section id="view-action" class="game-view hidden w-full max-w-4xl mx-auto flex flex-col items-center gap-3">
+      
+      <!-- HUD / Top Stats -->
+      <div class="w-full bg-slate-900 border border-pink-500/30 rounded-xl px-4 py-2.5 flex items-center justify-between shadow-lg text-xs sm:text-sm">
+        <div class="flex items-center gap-4">
+          <div class="font-scifi"><span class="text-slate-400">SCORE:</span> <span id="hd-score" class="font-bold text-pink-400 font-mono text-base">0</span></div>
+          <div class="font-scifi"><span class="text-slate-400">BEST:</span> <span id="hd-best" class="font-bold text-amber-400 font-mono text-base">0</span></div>
+        </div>
+        <div id="hd-powerup-status" class="flex items-center gap-2 font-mono text-xs">
+          <!-- Active powerups appear here -->
+        </div>
+        <button onclick="Hyperdash.start()" class="px-3 py-1 rounded-lg bg-pink-600 hover:bg-pink-500 text-white font-bold text-xs flex items-center gap-1 transition">
+          <i class="fa-solid fa-rotate-right"></i> Restart
+        </button>
+      </div>
+
+      <!-- Main Canvas Container -->
+      <div class="relative w-full aspect-[4/3] max-h-[520px] bg-slate-950 border-2 border-pink-500/50 rounded-2xl overflow-hidden shadow-2xl glow-pink">
+        <canvas id="canvas-hyperdash" class="w-full h-full"></canvas>
+
+        <!-- Overlay Menu (Start / Game Over) -->
+        <div id="hd-overlay" class="absolute inset-0 bg-slate-950/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center space-y-4">
+          <h2 id="hd-title" class="text-3xl sm:text-5xl font-scifi font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-500 via-cyan-400 to-purple-500">
+            HYPERDASH
+          </h2>
+          <p id="hd-subtitle" class="text-slate-300 text-xs sm:text-sm max-w-md">
+            Dodge falling neon obstacles using Left/Right Arrow keys, A/D, or Touch buttons. Collect shields, slow-mo, and multipliers!
+          </p>
+          <button onclick="Hyperdash.start()" class="px-8 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-cyan-500 hover:scale-105 font-scifi font-bold text-white text-base shadow-lg shadow-pink-500/30 transition">
+            START GAME
+          </button>
+        </div>
+      </div>
+
+      <!-- Touch Controls for Mobile -->
+      <div class="w-full grid grid-cols-2 gap-3 sm:hidden">
+        <button id="hd-btn-left" class="py-4 bg-slate-900 border border-slate-700 active:bg-pink-600/40 rounded-xl text-center text-xl text-pink-400 font-bold active:scale-95 transition">
+          <i class="fa-solid fa-arrow-left"></i> LEFT
+        </button>
+        <button id="hd-btn-right" class="py-4 bg-slate-900 border border-slate-700 active:bg-pink-600/40 rounded-xl text-center text-xl text-pink-400 font-bold active:scale-95 transition">
+          RIGHT <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- VIEW 2: GRIDSHIFT (PUZZLE) -->
+    <section id="view-puzzle" class="game-view hidden w-full max-w-lg mx-auto flex flex-col items-center gap-4">
+      
+      <!-- Top HUD -->
+      <div class="w-full flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-center min-w-[80px]">
+            <div class="text-[10px] text-slate-400 uppercase font-bold">SCORE</div>
+            <div id="gs-score" class="font-bold text-emerald-400 font-mono text-lg">0</div>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-center min-w-[80px]">
+            <div class="text-[10px] text-slate-400 uppercase font-bold">BEST</div>
+            <div id="gs-best" class="font-bold text-amber-400 font-mono text-lg">0</div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="GridShift.undo()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-semibold text-xs flex items-center gap-1 transition">
+            <i class="fa-solid fa-rotate-left"></i> Undo
+          </button>
+          <button onclick="GridShift.reset()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1 transition">
+            <i class="fa-solid fa-arrows-rotate"></i> New Game
+          </button>
+        </div>
+      </div>
+
+      <!-- 4x4 Grid Board Container -->
+      <div class="relative w-full aspect-square bg-slate-900/90 border-2 border-emerald-500/40 rounded-2xl p-3 shadow-2xl glow-green flex flex-col justify-between">
+        
+        <div id="gs-grid" class="w-full h-full grid grid-cols-4 grid-rows-4 gap-2.5 relative">
+          <!-- 16 Tiles generated dynamically by JavaScript -->
+        </div>
+
+        <!-- Win/Game Over Overlay -->
+        <div id="gs-overlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center p-6 text-center space-y-4">
+          <h3 id="gs-overlay-title" class="text-3xl font-scifi font-bold text-emerald-400">GAME OVER</h3>
+          <p id="gs-overlay-sub" class="text-slate-300 text-sm">No more valid moves remaining!</p>
+          <button onclick="GridShift.reset()" class="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 font-bold text-slate-950 transition">
+            Try Again
+          </button>
+        </div>
+      </div>
+
+      <!-- Touch Controls D-Pad for Mobile -->
+      <div class="w-full max-w-[240px] grid grid-cols-3 gap-2">
+        <div></div>
+        <button onclick="GridShift.move('up')" class="py-3 bg-slate-900 border border-slate-700 active:bg-emerald-600/40 rounded-xl text-emerald-400 font-bold active:scale-95 transition">
+          <i class="fa-solid fa-arrow-up"></i>
+        </button>
+        <div></div>
+        <button onclick="GridShift.move('left')" class="py-3 bg-slate-900 border border-slate-700 active:bg-emerald-600/40 rounded-xl text-emerald-400 font-bold active:scale-95 transition">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <button onclick="GridShift.move('down')" class="py-3 bg-slate-900 border border-slate-700 active:bg-emerald-600/40 rounded-xl text-emerald-400 font-bold active:scale-95 transition">
+          <i class="fa-solid fa-arrow-down"></i>
+        </button>
+        <button onclick="GridShift.move('right')" class="py-3 bg-slate-900 border border-slate-700 active:bg-emerald-600/40 rounded-xl text-emerald-400 font-bold active:scale-95 transition">
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- VIEW 3: LOST REALM (ADVENTURE) -->
+    <section id="view-adventure" class="game-view hidden w-full max-w-3xl mx-auto flex flex-col gap-4">
+      
+      <!-- Top Character Stats Bar -->
+      <div class="bg-amber-950/40 border border-amber-600/40 rounded-xl p-3 flex items-center justify-between text-amber-200 text-xs sm:text-sm font-fantasy">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-1.5">
+            <i class="fa-solid fa-heart text-rose-500"></i> HP: <span id="lr-hp" class="font-bold text-white font-mono">100</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <i class="fa-solid fa-coins text-amber-400"></i> Gold: <span id="lr-gold" class="font-bold text-white font-mono">25</span>
+          </div>
+        </div>
+        <button onclick="LostRealm.reset()" class="px-3 py-1 rounded-lg bg-amber-800/80 hover:bg-amber-700 text-amber-100 font-sans text-xs transition">
+          <i class="fa-solid fa-rotate-left"></i> Restart Story
+        </button>
+      </div>
+
+      <!-- Parchment Story Container -->
+      <div class="parchment-bg rounded-2xl p-5 sm:p-7 shadow-2xl border-2 border-amber-800/50 flex flex-col gap-4">
+        
+        <!-- Canvas Landscape Banner -->
+        <div class="w-full h-36 sm:h-48 rounded-xl overflow-hidden border border-amber-900/30 bg-slate-950 relative">
+          <canvas id="canvas-adventure" class="w-full h-full"></canvas>
+          <div id="lr-scene-tag" class="absolute top-2 left-2 px-2.5 py-1 rounded-md bg-slate-950/80 text-amber-300 font-fantasy text-xs tracking-wide">
+            Location: Eldoria Citadel
+          </div>
+        </div>
+
+        <!-- Scene Text Body -->
+        <div class="space-y-2">
+          <h2 id="lr-scene-title" class="text-xl sm:text-2xl font-fantasy font-bold text-amber-950">
+            The Dark Gateway
+          </h2>
+          <p id="lr-scene-text" class="text-xs sm:text-sm leading-relaxed text-amber-900 font-serif">
+            Loading adventure scene...
+          </p>
+        </div>
+
+        <!-- Inventory Rack -->
+        <div class="pt-2 border-t border-amber-900/20">
+          <div class="text-[11px] font-fantasy font-bold text-amber-900 uppercase tracking-wider mb-2 flex items-center gap-1">
+            <i class="fa-solid fa-suitcase"></i> Hero's Satchel:
+          </div>
+          <div id="lr-inventory" class="flex flex-wrap gap-2">
+            <!-- Dynamic inventory badges -->
+          </div>
+        </div>
+
+        <!-- Narrative Choice Buttons -->
+        <div id="lr-choices" class="flex flex-col gap-2.5 mt-2">
+          <!-- Choice buttons rendered dynamically -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- VIEW 4: TOWER DEFENSE (STRATEGY) -->
+    <section id="view-strategy" class="game-view hidden w-full max-w-5xl mx-auto flex flex-col gap-3">
+      
+      <!-- Command Bar / Stats -->
+      <div class="bg-slate-900 border border-blue-500/30 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
+        <div class="flex items-center gap-4 font-scifi">
+          <div><span class="text-slate-400">CORE HP:</span> <span id="td-hp" class="font-bold text-emerald-400 font-mono">100</span></div>
+          <div><span class="text-slate-400">ENERGY:</span> <span id="td-energy" class="font-bold text-cyan-400 font-mono">175</span></div>
+          <div><span class="text-slate-400">WAVE:</span> <span id="td-wave" class="font-bold text-amber-400 font-mono">1 / 10</span></div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="td-speed-btn" onclick="TowerDefense.toggleSpeed()" class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 font-mono text-xs hover:bg-slate-700">
+            Speed: 1x
+          </button>
+          <button id="td-start-wave-btn" onclick="TowerDefense.nextWave()" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/30 transition flex items-center gap-1">
+            <i class="fa-solid fa-play"></i> Start Wave
+          </button>
+          <button onclick="TowerDefense.reset()" class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white">
+            <i class="fa-solid fa-rotate-left"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Layout: Canvas Map + Build Sidebar -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-3">
+        
+        <!-- Canvas Map Display -->
+        <div class="lg:col-span-3 relative bg-slate-950 border-2 border-blue-500/40 rounded-2xl overflow-hidden aspect-[16/10] shadow-2xl">
+          <canvas id="canvas-td" class="w-full h-full"></canvas>
+
+          <!-- Wave Overlay / Game Over -->
+          <div id="td-overlay" class="hidden absolute inset-0 bg-slate-950/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center space-y-3">
+            <h3 id="td-overlay-title" class="text-3xl font-scifi font-bold text-blue-400">SECTOR CLEAR</h3>
+            <p id="td-overlay-sub" class="text-slate-300 text-xs sm:text-sm">Prepare defenses for incoming drone signatures.</p>
+            <button id="td-overlay-btn" onclick="TowerDefense.nextWave()" class="px-6 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-slate-950 font-bold transition">
+              Next Wave
+            </button>
+          </div>
+        </div>
+
+        <!-- Build / Selection Panel -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between gap-3">
+          <div class="space-y-3">
+            <h4 class="font-scifi text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-microchip"></i> Defense Systems
+            </h4>
+
+            <!-- Tower Type Selection Buttons -->
+            <div class="space-y-2">
+              <button onclick="TowerDefense.selectBuildType('laser')" id="td-build-laser" class="td-tower-card w-full p-2.5 rounded-xl bg-slate-800 border border-blue-500/50 hover:bg-slate-700 text-left transition flex items-center justify-between">
+                <div>
+                  <div class="font-bold text-xs text-cyan-300 flex items-center gap-1">
+                    <i class="fa-solid fa-bolt"></i> Laser Turret
+                  </div>
+                  <div class="text-[10px] text-slate-400">Rapid single target</div>
+                </div>
+                <div class="font-mono text-xs font-bold text-cyan-400">⚡100</div>
+              </button>
+
+              <button onclick="TowerDefense.selectBuildType('plasma')" id="td-build-plasma" class="td-tower-card w-full p-2.5 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-left transition flex items-center justify-between">
+                <div>
+                  <div class="font-bold text-xs text-amber-300 flex items-center gap-1">
+                    <i class="fa-solid fa-burst"></i> Plasma Cannon
+                  </div>
+                  <div class="text-[10px] text-slate-400">Heavy area splash</div>
+                </div>
+                <div class="font-mono text-xs font-bold text-amber-400">⚡175</div>
+              </button>
+
+              <button onclick="TowerDefense.selectBuildType('cryo')" id="td-build-cryo" class="td-tower-card w-full p-2.5 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-left transition flex items-center justify-between">
+                <div>
+                  <div class="font-bold text-xs text-purple-300 flex items-center gap-1">
+                    <i class="fa-solid fa-snowflake"></i> Cryo Emitter
+                  </div>
+                  <div class="text-[10px] text-slate-400">Slow enemy speed</div>
+                </div>
+                <div class="font-mono text-xs font-bold text-purple-400">⚡125</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Inspector / Selected Tower Info -->
+          <div id="td-inspector" class="bg-slate-950/80 rounded-xl p-3 border border-slate-800 space-y-2 text-xs">
+            <div class="text-[10px] font-bold text-slate-400 uppercase">Node Inspector</div>
+            <p id="td-inspect-desc" class="text-slate-300">Click any empty grid node to place towers or click built towers to upgrade.</p>
+            <div id="td-inspect-actions" class="hidden gap-2 pt-2">
+              <button id="td-btn-upgrade" onclick="TowerDefense.upgradeTower()" class="flex-1 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-bold text-white text-[11px]">Upgrade</button>
+              <button id="td-btn-sell" onclick="TowerDefense.sellTower()" class="flex-1 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 font-bold text-white text-[11px]">Sell</button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- VIEW 5: DUNGEON QUEST (RPG) -->
+    <section id="view-rpg" class="game-view hidden w-full max-w-4xl mx-auto flex flex-col gap-3">
+      
+      <!-- Top Floor & Hero Quick Bar -->
+      <div class="bg-slate-900 border border-purple-500/30 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
+        <div class="flex items-center gap-3 font-arcade text-xs">
+          <span class="text-purple-400">FLOOR: <span id="rpg-floor" class="text-white">1</span></span>
+          <span class="text-amber-400">GOLD: <span id="rpg-gold" class="text-white">50</span></span>
+        </div>
+        <div class="flex items-center gap-3 font-arcade text-xs">
+          <span class="text-emerald-400">POTIONS: <span id="rpg-potions" class="text-white">2</span></span>
+          <button onclick="DungeonQuest.reset()" class="px-2.5 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400 hover:text-white font-sans text-xs">Restart</button>
+        </div>
+      </div>
+
+      <!-- Main Battle Layout -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        
+        <!-- Left: Monster Visual Canvas & Combat Panel -->
+        <div class="bg-slate-900 border-2 border-purple-900/60 rounded-2xl p-4 flex flex-col gap-3 shadow-2xl">
+          
+          <!-- Enemy Health & Name -->
+          <div class="space-y-1">
+            <div class="flex justify-between items-center text-xs font-arcade">
+              <span id="rpg-enemy-name" class="text-rose-400 font-bold">Goblin Scout</span>
+              <span id="rpg-enemy-hp-text" class="text-slate-300">40 / 40 HP</span>
+            </div>
+            <div class="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+              <div id="rpg-enemy-hp-bar" class="h-full bg-gradient-to-r from-rose-600 to-rose-400 w-full transition-all"></div>
+            </div>
+          </div>
+
+          <!-- Monster Sprite Render Canvas -->
+          <div class="w-full h-44 bg-slate-950 rounded-xl border border-slate-800 relative overflow-hidden flex items-center justify-center">
+            <canvas id="canvas-rpg" class="w-full h-full"></canvas>
+          </div>
+
+          <!-- Hero HP & MP Bars -->
+          <div class="space-y-2 pt-1">
+            <div class="space-y-1">
+              <div class="flex justify-between items-center text-xs font-arcade">
+                <span class="text-emerald-400">HERO HP</span>
+                <span id="rpg-hero-hp-text" class="text-slate-300">100 / 100</span>
+              </div>
+              <div class="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                <div id="rpg-hero-hp-bar" class="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 w-full transition-all"></div>
+              </div>
+            </div>
+
+            <div class="space-y-1">
+              <div class="flex justify-between items-center text-xs font-arcade">
+                <span class="text-cyan-400">HERO MP</span>
+                <span id="rpg-hero-mp-text" class="text-slate-300">50 / 50</span>
+              </div>
+              <div class="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                <div id="rpg-hero-mp-bar" class="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 w-full transition-all"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right: Actions & Battle Log -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between gap-3">
+          
+          <!-- Combat Action Command Deck -->
+          <div class="space-y-2">
+            <div class="text-[10px] font-arcade uppercase text-slate-400 tracking-wider">Combat Actions</div>
+            <div id="rpg-action-grid" class="grid grid-cols-2 gap-2">
+              <button onclick="DungeonQuest.action('attack')" class="p-2.5 rounded-xl bg-slate-800 border border-rose-500/40 hover:bg-slate-700 text-rose-300 font-bold text-xs flex items-center justify-center gap-1.5 transition">
+                <i class="fa-solid fa-hand-fist"></i> Attack
+              </button>
+              <button onclick="DungeonQuest.action('fireball')" class="p-2.5 rounded-xl bg-slate-800 border border-amber-500/40 hover:bg-slate-700 text-amber-300 font-bold text-xs flex items-center justify-center gap-1.5 transition">
+                <i class="fa-solid fa-fire"></i> Fireball <span class="text-[10px] text-amber-400/80">(15 MP)</span>
+              </button>
+              <button onclick="DungeonQuest.action('lightning')" class="p-2.5 rounded-xl bg-slate-800 border border-cyan-500/40 hover:bg-slate-700 text-cyan-300 font-bold text-xs flex items-center justify-center gap-1.5 transition">
+                <i class="fa-solid fa-bolt"></i> Stun Bolt <span class="text-[10px] text-cyan-400/80">(20 MP)</span>
+              </button>
+              <button onclick="DungeonQuest.action('defend')" class="p-2.5 rounded-xl bg-slate-800 border border-blue-500/40 hover:bg-slate-700 text-blue-300 font-bold text-xs flex items-center justify-center gap-1.5 transition">
+                <i class="fa-solid fa-shield"></i> Defend (+MP)
+              </button>
+              <button onclick="DungeonQuest.action('heal')" class="col-span-2 p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/50 hover:bg-emerald-900/60 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 transition">
+                <i class="fa-solid fa-flask"></i> Drink Health Potion / Spell Heal
+              </button>
+            </div>
+          </div>
+
+          <!-- Color-Coded Battle Log -->
+          <div class="flex-1 flex flex-col min-h-[140px]">
+            <div class="text-[10px] font-arcade uppercase text-slate-400 tracking-wider mb-1">Battle Log</div>
+            <div id="rpg-log" class="flex-1 bg-slate-950 rounded-xl p-3 border border-slate-800 overflow-y-auto font-mono text-xs space-y-1 max-h-[160px]">
+              <div class="text-slate-400">A monster draws near! Choose your action.</div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Merchant Shop Modal (Appears between floor levels) -->
+      <div id="rpg-shop-modal" class="hidden bg-slate-900 border-2 border-amber-500/50 rounded-2xl p-5 shadow-2xl space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+          <h3 class="font-arcade text-sm text-amber-400 flex items-center gap-2">
+            <i class="fa-solid fa-store"></i> Dungeon Merchant Shop
+          </h3>
+          <span class="text-xs text-slate-300">Your Gold: <span id="rpg-shop-gold" class="font-mono text-amber-400 font-bold">0</span></span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button onclick="DungeonQuest.buyShop('potion')" class="p-3 bg-slate-800 border border-slate-700 hover:border-emerald-500 rounded-xl text-left transition flex items-center justify-between">
+            <div>
+              <div class="text-xs font-bold text-emerald-300">HP Potion (+50 HP)</div>
+              <div class="text-[10px] text-slate-400">Consumable healing</div>
+            </div>
+            <span class="text-xs font-mono text-amber-400 font-bold">25 Gold</span>
+          </button>
+
+          <button onclick="DungeonQuest.buyShop('elixir')" class="p-3 bg-slate-800 border border-slate-700 hover:border-cyan-500 rounded-xl text-left transition flex items-center justify-between">
+            <div>
+              <div class="text-xs font-bold text-cyan-300">MP Elixir (+30 MP)</div>
+              <div class="text-[10px] text-slate-400">Restores spell mana</div>
+            </div>
+            <span class="text-xs font-mono text-amber-400 font-bold">20 Gold</span>
+          </button>
+
+          <button onclick="DungeonQuest.buyShop('weapon')" class="p-3 bg-slate-800 border border-slate-700 hover:border-rose-500 rounded-xl text-left transition flex items-center justify-between">
+            <div>
+              <div class="text-xs font-bold text-rose-300">Weapon Upgrade (+5 Atk)</div>
+              <div class="text-[10px] text-slate-400">Increases physical damage</div>
+            </div>
+            <span class="text-xs font-mono text-amber-400 font-bold">40 Gold</span>
+          </button>
+
+          <button onclick="DungeonQuest.buyShop('armor')" class="p-3 bg-slate-800 border border-slate-700 hover:border-blue-500 rounded-xl text-left transition flex items-center justify-between">
+            <div>
+              <div class="text-xs font-bold text-blue-300">Armor Upgrade (+3 Def)</div>
+              <div class="text-[10px] text-slate-400">Reduces enemy attack damage</div>
+            </div>
+            <span class="text-xs font-mono text-amber-400 font-bold">40 Gold</span>
+          </button>
+        </div>
+
+        <button onclick="DungeonQuest.closeShop()" class="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs uppercase tracking-wider font-arcade transition">
+          Descend to Next Floor <i class="fa-solid fa-arrow-down ml-1"></i>
+        </button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script>
+    /* ==========================================================================
+       SYNTH SOUND ENGINE (WEB AUDIO API)
+       ========================================================================== */
+    const AudioEngine = {
+      ctx: null,
+      muted: false,
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      },
+
+      play(type) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        switch(type) {
+          case 'click':
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.05);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+            osc.start(now);
+            osc.stop(now + 0.05);
+            break;
+
+          case 'laser':
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(800, now);
+            osc.frequency.exponentialRampToValueAtTime(150, now + 0.12);
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+            osc.start(now);
+            osc.stop(now + 0.12);
+            break;
+
+          case 'hit':
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(120, now);
+            osc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now);
+            osc.stop(now + 0.15);
+            break;
+
+          case 'powerup':
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.exponentialRampToValueAtTime(900, now + 0.2);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now);
+            osc.stop(now + 0.2);
+            break;
+
+          case 'merge':
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(350, now);
+            osc.frequency.exponentialRampToValueAtTime(700, now + 0.15);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now);
+            osc.stop(now + 0.15);
+            break;
+
+          case 'victory':
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.setValueAtTime(554.37, now + 0.1);
+            osc.frequency.setValueAtTime(659.25, now + 0.2);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+            osc.start(now);
+            osc.stop(now + 0.4);
+            break;
+
+          case 'gameover':
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.exponentialRampToValueAtTime(80, now + 0.4);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+            osc.start(now);
+            osc.stop(now + 0.4);
+            break;
+        }
+      }
+    };
+
+    function toggleAudio() {
+      AudioEngine.muted = !AudioEngine.muted;
+      const icon = document.getElementById('audio-icon');
+      if (AudioEngine.muted) {
+        icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+      } else {
+        icon.className = 'fa-solid fa-volume-high text-cyan-400';
+        AudioEngine.play('click');
+      }
+      localStorage.setItem('arcade_sound_muted', AudioEngine.muted);
+    }
+
+    /* ==========================================================================
+       GLOBAL ROUTING & SCORE PERSISTENCE
+       ========================================================================== */
+    const HighScores = {
+      get(key) {
+        return parseInt(localStorage.getItem(`arcade_score_${key}`) || '0', 10);
+      },
+      set(key, val) {
+        const current = this.get(key);
+        if (val > current) {
+          localStorage.setItem(`arcade_score_${key}`, val);
+          this.updateDisplay();
+          return true;
+        }
+        return false;
+      },
+      updateDisplay() {
+        const act = this.get('action');
+        const puz = this.get('puzzle');
+        const adv = this.get('adventure');
+        const str = this.get('strategy');
+        const rpg = this.get('rpg');
+
+        document.getElementById('hub-score-action').innerText = act;
+        document.getElementById('hub-score-puzzle').innerText = puz;
+        document.getElementById('hub-score-adventure').innerText = adv;
+        document.getElementById('hub-score-strategy').innerText = str;
+        document.getElementById('hub-score-rpg').innerText = rpg;
+
+        document.getElementById('hub-total-score').innerText = act + puz + adv + str + rpg;
+        document.getElementById('hd-best').innerText = act;
+        document.getElementById('gs-best').innerText = puz;
+      }
+    };
+
+    function resetAllScores() {
+      if (confirm('Are you sure you want to reset all high scores?')) {
+        ['action', 'puzzle', 'adventure', 'strategy', 'rpg'].forEach(k => {
+          localStorage.removeItem(`arcade_score_${k}`);
+        });
+        HighScores.updateDisplay();
+        AudioEngine.play('click');
+      }
+    }
+
+    function switchTab(tabId) {
+      AudioEngine.play('click');
+
+      // Update URL Hash
+      window.location.hash = tabId;
+
+      // Toggle views
+      document.querySelectorAll('.game-view').forEach(el => el.classList.add('hidden'));
+      const activeView = document.getElementById(`view-${tabId}`);
+      if (activeView) activeView.classList.remove('hidden');
+
+      // Update Navigation Tabs Styling
+      document.querySelectorAll('.nav-tab').forEach(btn => {
+        btn.classList.remove('bg-slate-800', 'text-cyan-400', 'border', 'border-slate-700');
+        btn.classList.add('text-slate-400');
+      });
+      const activeBtn = document.getElementById(`tab-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-slate-800', 'text-cyan-400', 'border', 'border-slate-700');
+        activeBtn.classList.remove('text-slate-400');
+      }
+
+      // Initialize / Trigger active game engine hooks
+      if (tabId === 'action' && !Hyperdash.running) Hyperdash.initCanvas();
+      if (tabId === 'puzzle' && GridShift.board.flat().every(v => v === 0)) GridShift.reset();
+      if (tabId === 'adventure' && LostRealm.currentScene === null) LostRealm.reset();
+      if (tabId === 'strategy' && !TowerDefense.initialized) TowerDefense.init();
+      if (tabId === 'rpg' && !DungeonQuest.initialized) DungeonQuest.init();
+    }
+
+    /* ==========================================================================
+       GAME 1: HYPERDASH (ACTION)
+       ========================================================================== */
+    const Hyperdash = {
+      canvas: null,
+      ctx: null,
+      running: false,
+      score: 0,
+      craft: { x: 0, y: 0, w: 32, h: 20, speed: 7 },
+      obstacles: [],
+      powerups: [],
+      particles: [],
+      keys: { left: false, right: false },
+      shieldTime: 0,
+      slowMoTime: 0,
+      multiplierTime: 0,
+      animId: null,
+
+      initCanvas() {
+        this.canvas = document.getElementById('canvas-hyperdash');
+        if (!this.canvas) return;
+        this.ctx = this.canvas.getContext('2d');
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+
+        // Keyboard events
+        window.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') this.keys.left = true;
+          if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') this.keys.right = true;
+        });
+        window.addEventListener('keyup', (e) => {
+          if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') this.keys.left = false;
+          if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') this.keys.right = false;
+        });
+
+        // Touch control buttons
+        const btnLeft = document.getElementById('hd-btn-left');
+        const btnRight = document.getElementById('hd-btn-right');
+        if (btnLeft && btnRight) {
+          btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); this.keys.left = true; });
+          btnLeft.addEventListener('touchend', (e) => { e.preventDefault(); this.keys.left = false; });
+          btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); this.keys.right = true; });
+          btnRight.addEventListener('touchend', (e) => { e.preventDefault(); this.keys.right = false; });
+        }
+      },
+
+      resize() {
+        if (!this.canvas) return;
+        this.canvas.width = this.canvas.parentElement.clientWidth;
+        this.canvas.height = this.canvas.parentElement.clientHeight;
+        this.craft.y = this.canvas.height - 40;
+        if (this.craft.x === 0) this.craft.x = this.canvas.width / 2 - this.craft.w / 2;
+      },
+
+      start() {
+        this.initCanvas();
+        this.running = true;
+        this.score = 0;
+        this.obstacles = [];
+        this.powerups = [];
+        this.particles = [];
+        this.shieldTime = 0;
+        this.slowMoTime = 0;
+        this.multiplierTime = 0;
+        this.craft.x = this.canvas.width / 2 - this.craft.w / 2;
+        
+        document.getElementById('hd-overlay').classList.add('hidden');
+        AudioEngine.play('click');
+        if (this.animId) cancelAnimationFrame(this.animId);
+        this.loop();
+      },
+
+      spawnObstacle() {
+        const w = 24 + Math.random() * 32;
+        const x = Math.random() * (this.canvas.width - w);
+        const speed = 3 + Math.random() * 3 + (this.score / 200);
+        this.obstacles.push({ x, y: -20, w, h: 20, speed });
+      },
+
+      spawnPowerup() {
+        const types = ['shield', 'slowmo', 'multiplier'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        const x = Math.random() * (this.canvas.width - 20);
+        this.powerups.push({ x, y: -20, w: 20, h: 20, type, speed: 2.5 });
+      },
+
+      addExplosion(x, y, color) {
+        for (let i = 0; i < 12; i++) {
+          this.particles.push({
+            x, y,
+            vx: (Math.random() - 0.5) * 6,
+            vy: (Math.random() - 0.5) * 6,
+            life: 20 + Math.random() * 15,
+            color
+          });
+        }
+      },
+
+      loop() {
+        if (!this.running) return;
+        this.update();
+        this.render();
+        this.animId = requestAnimationFrame(() => this.loop());
+      },
+
+      update() {
+        // Decrement powerup timers
+        if (this.shieldTime > 0) this.shieldTime--;
+        if (this.slowMoTime > 0) this.slowMoTime--;
+        if (this.multiplierTime > 0) this.multiplierTime--;
+
+        // Update Score
+        const points = (this.multiplierTime > 0 ? 2 : 1);
+        this.score += points * 0.1;
+        document.getElementById('hd-score').innerText = Math.floor(this.score);
+
+        // Movement
+        if (this.keys.left) this.craft.x = Math.max(0, this.craft.x - this.craft.speed);
+        if (this.keys.right) this.craft.x = Math.min(this.canvas.width - this.craft.w, this.craft.x + this.craft.speed);
+
+        // Spawning
+        if (Math.random() < 0.05) this.spawnObstacle();
+        if (Math.random() < 0.005) this.spawnPowerup();
+
+        const speedMod = this.slowMoTime > 0 ? 0.5 : 1.0;
+
+        // Obstacles loop
+        for (let i = this.obstacles.length - 1; i >= 0; i--) {
+          const obs = this.obstacles[i];
+          obs.y += obs.speed * speedMod;
+
+          // Collision Check
+          if (
+            this.craft.x < obs.x + obs.w &&
+            this.craft.x + this.craft.w > obs.x &&
+            this.craft.y < obs.y + obs.h &&
+            this.craft.y + this.craft.h > obs.y
+          ) {
+            if (this.shieldTime > 0) {
+              // Shield absorbs hit
+              this.addExplosion(obs.x + obs.w / 2, obs.y + obs.h / 2, '#06b6d4');
+              AudioEngine.play('hit');
+              this.obstacles.splice(i, 1);
+              this.shieldTime = 0;
+              continue;
+            } else {
+              // Game Over
+              this.gameOver();
+              return;
+            }
+          }
+
+          // Remove offscreen
+          if (obs.y > this.canvas.height) this.obstacles.splice(i, 1);
+        }
+
+        // Powerups loop
+        for (let i = this.powerups.length - 1; i >= 0; i--) {
+          const p = this.powerups[i];
+          p.y += p.speed;
+
+          if (
+            this.craft.x < p.x + p.w &&
+            this.craft.x + this.craft.w > p.x &&
+            this.craft.y < p.y + p.h &&
+            this.craft.y + this.craft.h > p.y
+          ) {
+            AudioEngine.play('powerup');
+            if (p.type === 'shield') this.shieldTime = 300;
+            if (p.type === 'slowmo') this.slowMoTime = 250;
+            if (p.type === 'multiplier') this.multiplierTime = 300;
+            this.addExplosion(p.x + p.w / 2, p.y + p.h / 2, '#ec4899');
+            this.powerups.splice(i, 1);
+            continue;
+          }
+
+          if (p.y > this.canvas.height) this.powerups.splice(i, 1);
+        }
+
+        // Particles
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const pt = this.particles[i];
+          pt.x += pt.vx;
+          pt.y += pt.vy;
+          pt.life--;
+          if (pt.life <= 0) this.particles.splice(i, 1);
+        }
+
+        // Powerup Status HUD
+        const statusEl = document.getElementById('hd-powerup-status');
+        let statusHTML = '';
+        if (this.shieldTime > 0) statusHTML += `<span class="text-cyan-400 font-bold">🛡️ SHIELD</span>`;
+        if (this.slowMoTime > 0) statusHTML += `<span class="text-purple-400 font-bold">⏱️ SLOW-MO</span>`;
+        if (this.multiplierTime > 0) statusHTML += `<span class="text-amber-400 font-bold">⚡2X SCORE</span>`;
+        statusEl.innerHTML = statusHTML;
+      },
+
+      render() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Cyberpunk Background Grid Lines
+        this.ctx.strokeStyle = '#1e1b4b';
+        this.ctx.lineWidth = 1;
+        for (let x = 0; x < this.canvas.width; x += 40) {
+          this.ctx.beginPath();
+          this.ctx.moveTo(x, 0);
+          this.ctx.lineTo(x, this.canvas.height);
+          this.ctx.stroke();
+        }
+
+        // Render Player Craft
+        this.ctx.save();
+        this.ctx.shadowBlur = 15;
+        this.ctx.shadowColor = '#ec4899';
+        this.ctx.fillStyle = '#ec4899';
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.craft.x + this.craft.w / 2, this.craft.y);
+        this.ctx.lineTo(this.craft.x + this.craft.w, this.craft.y + this.craft.h);
+        this.ctx.lineTo(this.craft.x, this.craft.y + this.craft.h);
+        this.ctx.closePath();
+        this.ctx.fill();
+
+        // Shield Bubble visual
+        if (this.shieldTime > 0) {
+          this.ctx.strokeStyle = '#06b6d4';
+          this.ctx.lineWidth = 3;
+          this.ctx.beginPath();
+          this.ctx.arc(this.craft.x + this.craft.w / 2, this.craft.y + this.craft.h / 2, 24, 0, Math.PI * 2);
+          this.ctx.stroke();
+        }
+        this.ctx.restore();
+
+        // Render Obstacles
+        this.ctx.save();
+        this.ctx.shadowBlur = 10;
+        this.ctx.shadowColor = '#06b6d4';
+        this.ctx.fillStyle = '#06b6d4';
+        this.obstacles.forEach(obs => {
+          this.ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+        });
+        this.ctx.restore();
+
+        // Render Powerups
+        this.powerups.forEach(p => {
+          this.ctx.save();
+          this.ctx.shadowBlur = 12;
+          this.ctx.fillStyle = p.type === 'shield' ? '#06b6d4' : (p.type === 'slowmo' ? '#a855f7' : '#eab308');
+          this.ctx.shadowColor = this.ctx.fillStyle;
+          this.ctx.fillRect(p.x, p.y, p.w, p.h);
+          this.ctx.restore();
+        });
+
+        // Render Particles
+        this.particles.forEach(pt => {
+          this.ctx.fillStyle = pt.color;
+          this.ctx.fillRect(pt.x, pt.y, 3, 3);
+        });
+      },
+
+      gameOver() {
+        this.running = false;
+        AudioEngine.play('gameover');
+        const finalScore = Math.floor(this.score);
+        HighScores.set('action', finalScore);
+
+        document.getElementById('hd-title').innerText = 'CRASH DETECTED';
+        document.getElementById('hd-subtitle').innerText = `Final Score: ${finalScore} points!`;
+        document.getElementById('hd-overlay').classList.remove('hidden');
+      }
+    };
+
+    /* ==========================================================================
+       GAME 2: GRIDSHIFT (PUZZLE)
+       ========================================================================== */
+    const GridShift = {
+      board: Array(4).fill().map(() => Array(4).fill(0)),
+      score: 0,
+      history: null,
+
+      reset() {
+        this.board = Array(4).fill().map(() => Array(4).fill(0));
+        this.score = 0;
+        this.history = null;
+        this.spawnTile();
+        this.spawnTile();
+        this.render();
+        document.getElementById('gs-overlay').classList.add('hidden');
+        AudioEngine.play('click');
+      },
+
+      spawnTile() {
+        const emptyCells = [];
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            if (this.board[r][c] === 0) emptyCells.push({ r, c });
+          }
+        }
+        if (emptyCells.length > 0) {
+          const cell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+          this.board[cell.r][cell.c] = Math.random() < 0.9 ? 2 : 4;
+        }
+      },
+
+      saveState() {
+        this.history = {
+          board: JSON.parse(JSON.stringify(this.board)),
+          score: this.score
+        };
+      },
+
+      undo() {
+        if (this.history) {
+          this.board = JSON.parse(JSON.stringify(this.history.board));
+          this.score = this.history.score;
+          this.history = null;
+          this.render();
+          AudioEngine.play('click');
+        }
+      },
+
+      move(direction) {
+        this.saveState();
+        let moved = false;
+        let mergedScore = 0;
+
+        const rotate = (matrix) => matrix[0].map((_, i) => matrix.map(row => row[i]).reverse());
+
+        let tempBoard = JSON.parse(JSON.stringify(this.board));
+
+        // Rotate board so we always slide left
+        let rotations = 0;
+        if (direction === 'up') rotations = 3;
+        if (direction === 'right') rotations = 2;
+        if (direction === 'down') rotations = 1;
+
+        for (let i = 0; i < rotations; i++) tempBoard = rotate(tempBoard);
+
+        // Slide & Merge Left logic
+        for (let r = 0; r < 4; r++) {
+          let row = tempBoard[r].filter(v => v !== 0);
+          for (let c = 0; c < row.length - 1; c++) {
+            if (row[c] === row[c + 1]) {
+              row[c] *= 2;
+              mergedScore += row[c];
+              row.splice(c + 1, 1);
+              moved = true;
+            }
+          }
+          while (row.length < 4) row.push(0);
+          if (JSON.stringify(tempBoard[r]) !== JSON.stringify(row)) moved = true;
+          tempBoard[r] = row;
+        }
+
+        // Rotate back
+        for (let i = 0; i < (4 - rotations) % 4; i++) tempBoard = rotate(tempBoard);
+
+        if (moved) {
+          this.board = tempBoard;
+          this.score += mergedScore;
+          if (mergedScore > 0) AudioEngine.play('merge');
+          this.spawnTile();
+          this.render();
+          HighScores.set('puzzle', this.score);
+
+          if (this.checkGameOver()) {
+            AudioEngine.play('gameover');
+            document.getElementById('gs-overlay').classList.remove('hidden');
+          }
+        }
+      },
+
+      checkGameOver() {
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            if (this.board[r][c] === 0) return false;
+            if (c < 3 && this.board[r][c] === this.board[r][c + 1]) return false;
+            if (r < 3 && this.board[r][c] === this.board[r + 1][c]) return false;
+          }
+        }
+        return true;
+      },
+
+      getTileColor(val) {
+        const colors = {
+          2: 'bg-emerald-900/60 text-emerald-200 border-emerald-700/50',
+          4: 'bg-teal-900/60 text-teal-200 border-teal-700/50',
+          8: 'bg-cyan-900/60 text-cyan-200 border-cyan-700/50',
+          16: 'bg-blue-900/60 text-blue-200 border-blue-700/50',
+          32: 'bg-indigo-900/60 text-indigo-200 border-indigo-700/50',
+          64: 'bg-purple-900/60 text-purple-200 border-purple-700/50',
+          128: 'bg-pink-900/60 text-pink-200 border-pink-700/50 glow-pink',
+          256: 'bg-rose-900/60 text-rose-200 border-rose-700/50 glow-pink',
+          512: 'bg-amber-900/60 text-amber-200 border-amber-700/50 glow-gold',
+          1024: 'bg-yellow-900/60 text-yellow-200 border-yellow-700/50 glow-gold',
+          2048: 'bg-emerald-500 text-slate-950 border-emerald-300 font-extrabold glow-green'
+        };
+        return colors[val] || 'bg-purple-600 text-white glow-pink';
+      },
+
+      render() {
+        document.getElementById('gs-score').innerText = this.score;
+        const gridContainer = document.getElementById('gs-grid');
+        gridContainer.innerHTML = '';
+
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            const val = this.board[r][c];
+            const tile = document.createElement('div');
+            tile.className = `w-full h-full rounded-xl flex items-center justify-center font-scifi font-bold text-lg sm:text-2xl border transition-all ${
+              val === 0 ? 'bg-slate-950/60 border-slate-800 text-transparent' : `${this.getTileColor(val)} animate-pop`
+            }`;
+            tile.innerText = val > 0 ? val : '';
+            gridContainer.appendChild(tile);
+          }
+        }
+      }
+    };
+
+    // Keyboard listener for Puzzle
+    window.addEventListener('keydown', (e) => {
+      const activeView = document.getElementById('view-puzzle');
+      if (activeView && !activeView.classList.contains('hidden')) {
+        if (e.key === 'ArrowUp') GridShift.move('up');
+        if (e.key === 'ArrowDown') GridShift.move('down');
+        if (e.key === 'ArrowLeft') GridShift.move('left');
+        if (e.key === 'ArrowRight') GridShift.move('right');
+      }
+    });
+
+    /* ==========================================================================
+       GAME 3: LOST REALM (ADVENTURE)
+       ========================================================================== */
+    const LostRealm = {
+      hp: 100,
+      gold: 25,
+      inventory: ['Rusty Dagger', 'Health Potion'],
+      currentScene: null,
+
+      scenes: {
+        start: {
+          title: "The Crossroads of Eldoria",
+          bg: "forest",
+          text: "You stand at the edge of the Whispering Woods. To the east lies the abandoned Citadel of Shadows. To the west, a dark cave mouth emanates an ominous purple hum.",
+          choices: [
+            { text: "Explore the Citadel Gateway", next: "citadel" },
+            { text: "Enter the Glowing Cave", next: "cave" },
+            { text: "Visit the Woodland Merchant", next: "merchant" }
+          ]
+        },
+        citadel: {
+          title: "The Iron Gate",
+          bg: "castle",
+          text: "The massive iron gate of the Citadel is rusted shut, locked by an ancient rune mechanism.",
+          choices: [
+            { text: "Use Ancient Tome (Requires Item)", reqItem: "Ancient Tome", next: "citadel_inside" },
+            { text: "Force the gate open (-20 HP)", hpChange: -20, next: "citadel_courtyard" },
+            { text: "Return to Crossroads", next: "start" }
+          ]
+        },
+        cave: {
+          title: "The Crystal Cavern",
+          bg: "cave",
+          text: "Glowing cyan crystals illuminate a stone pedestal containing a shimmering Enchanted Gem.",
+          choices: [
+            { text: "Take Enchanted Gem", getItem: "Enchanted Gem", next: "cave_deeper" },
+            { text: "Leave the gem and return", next: "start" }
+          ]
+        },
+        merchant: {
+          title: "Wandering Trader",
+          bg: "tavern",
+          text: "A cloaked trader offers rare wares. 'Ah adventurer! I sell Ancient Tomes for 20 Gold coins!'",
+          choices: [
+            { text: "Buy Ancient Tome (20 Gold)", goldCost: 20, getItem: "Ancient Tome", next: "merchant" },
+            { text: "Drink Health Potion (+30 HP)", reqItem: "Health Potion", useItem: "Health Potion", hpChange: 30, next: "merchant" },
+            { text: "Return to Crossroads", next: "start" }
+          ]
+        },
+        cave_deeper: {
+          title: "The Shadow Guardian",
+          bg: "cave",
+          text: "A dark phantom blocks your path! It shrieks for the Enchanted Gem.",
+          choices: [
+            { text: "Offer Enchanted Gem to Guardian", useItem: "Enchanted Gem", next: "ending_curse" },
+            { text: "Attack with Rusty Dagger", reqItem: "Rusty Dagger", next: "dragon_lair" }
+          ]
+        },
+        citadel_inside: {
+          title: "The Grand Library",
+          bg: "castle",
+          text: "Inside the Citadel, you find chest brimming with ancient wealth and golden artifacts!",
+          choices: [
+            { text: "Claim the Royal Treasure (+100 Gold)", goldGain: 100, next: "ending_wealth" }
+          ]
+        },
+        citadel_courtyard: {
+          title: "Guard Dragon's Roost",
+          bg: "dragon",
+          text: "Your forced entry awakened the Citadel's guardian dragon!",
+          choices: [
+            { text: "Slay Dragon with Enchanted Gem", reqItem: "Enchanted Gem", next: "ending_victory" },
+            { text: "Attempt to flee", hpChange: -100, next: "ending_tragic" }
+          ]
+        },
+        dragon_lair: {
+          title: "The Secret Cavern Exit",
+          bg: "dragon",
+          text: "You bypass the guardian and find a secret exit leading past the dragon lair!",
+          choices: [
+            { text: "Emerge into sunlight victorious", next: "ending_victory" }
+          ]
+        },
+
+        // Endings
+        ending_victory: {
+          title: "ENDING: Heroic Legend",
+          bg: "castle",
+          text: "Through courage and wisdom, you vanquished Eldoria's shadows and emerged as a legendary realm hero!",
+          choices: [{ text: "Play Again", next: "start", reset: true }]
+        },
+        ending_wealth: {
+          title: "ENDING: Wealthy Escape",
+          bg: "tavern",
+          text: "You escaped Eldoria with unimaginable riches, living out your days in luxury across distant lands!",
+          choices: [{ text: "Play Again", next: "start", reset: true }]
+        },
+        ending_curse: {
+          title: "ENDING: Dark Curse",
+          bg: "cave",
+          text: "The phantom consumed your soul, binding you to the crystal cavern for all eternity.",
+          choices: [{ text: "Play Again", next: "start", reset: true }]
+        },
+        ending_tragic: {
+          title: "ENDING: Tragic Fate",
+          bg: "dragon",
+          text: "Overwhelmed by your wounds, your journey comes to an unfortunate end in the darkness.",
+          choices: [{ text: "Play Again", next: "start", reset: true }]
+        }
+      },
+
+      reset() {
+        this.hp = 100;
+        this.gold = 25;
+        this.inventory = ['Rusty Dagger', 'Health Potion'];
+        this.loadScene('start');
+      },
+
+      loadScene(sceneKey) {
+        const scene = this.scenes[sceneKey];
+        if (!scene) return;
+        this.currentScene = sceneKey;
+
+        document.getElementById('lr-scene-title').innerText = scene.title;
+        document.getElementById('lr-scene-text').innerText = scene.text;
+        document.getElementById('lr-scene-tag').innerText = `Location: ${scene.bg.toUpperCase()}`;
+
+        // Render Canvas Visual Scene Header
+        this.renderCanvasBanner(scene.bg);
+
+        // Update Stats HUD
+        document.getElementById('lr-hp').innerText = this.hp;
+        document.getElementById('lr-gold').innerText = this.gold;
+        HighScores.set('adventure', this.gold);
+
+        // Render Inventory
+        const invContainer = document.getElementById('lr-inventory');
+        invContainer.innerHTML = '';
+        this.inventory.forEach(item => {
+          const badge = document.createElement('span');
+          badge.className = 'px-2 py-1 rounded bg-amber-900/30 border border-amber-700/60 text-[11px] font-fantasy text-amber-900 font-bold';
+          badge.innerText = `🗡️ ${item}`;
+          invContainer.appendChild(badge);
+        });
+
+        // Render Choices
+        const choicesContainer = document.getElementById('lr-choices');
+        choicesContainer.innerHTML = '';
+
+        scene.choices.forEach(c => {
+          const btn = document.createElement('button');
+          btn.className = 'w-full p-3 rounded-xl bg-amber-900/10 hover:bg-amber-900/20 border border-amber-900/30 text-amber-950 font-serif font-bold text-xs sm:text-sm text-left transition flex items-center justify-between';
+
+          let disabled = false;
+          if (c.reqItem && !this.inventory.includes(c.reqItem)) disabled = true;
+          if (c.goldCost && this.gold < c.goldCost) disabled = true;
+
+          if (disabled) {
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            btn.innerHTML = `<span>${c.text}</span> <span class="text-[10px] text-rose-700 font-bold">(Missing Requirement)</span>`;
+          } else {
+            btn.innerHTML = `<span>${c.text}</span> <i class="fa-solid fa-chevron-right text-xs text-amber-800"></i>`;
+            btn.onclick = () => {
+              AudioEngine.play('click');
+              if (c.reset) { this.reset(); return; }
+              if (c.hpChange) this.hp = Math.max(0, this.hp + c.hpChange);
+              if (c.goldCost) this.gold -= c.goldCost;
+              if (c.goldGain) this.gold += c.goldGain;
+              if (c.getItem && !this.inventory.includes(c.getItem)) this.inventory.push(c.getItem);
+              if (c.useItem) {
+                const idx = this.inventory.indexOf(c.useItem);
+                if (idx > -1) this.inventory.splice(idx, 1);
+              }
+
+              if (this.hp <= 0) {
+                this.loadScene('ending_tragic');
+              } else {
+                this.loadScene(c.next);
+              }
+            };
+          }
+          choicesContainer.appendChild(btn);
+        });
+      },
+
+      renderCanvasBanner(type) {
+        const canvas = document.getElementById('canvas-adventure');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (type === 'forest') {
+          ctx.fillStyle = '#064e3b';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#047857';
+          for (let i = 0; i < canvas.width; i += 30) {
+            ctx.beginPath();
+            ctx.moveTo(i, canvas.height);
+            ctx.lineTo(i + 15, canvas.height - 60);
+            ctx.lineTo(i + 30, canvas.height);
+            ctx.fill();
+          }
+        } else if (type === 'cave') {
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#06b6d4';
+          ctx.beginPath();
+          ctx.arc(canvas.width / 2, canvas.height / 2, 30, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (type === 'castle') {
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#334155';
+          ctx.fillRect(canvas.width / 4, 30, canvas.width / 2, canvas.height);
+        } else {
+          ctx.fillStyle = '#450a0a';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+    };
+
+    /* ==========================================================================
+       GAME 4: TOWER DEFENSE (STRATEGY)
+       ========================================================================== */
+    const TowerDefense = {
+      canvas: null,
+      ctx: null,
+      initialized: false,
+      hp: 100,
+      energy: 175,
+      wave: 1,
+      speed: 1,
+      towers: [],
+      creeps: [],
+      projectiles: [],
+      particles: [],
+      path: [
+        { x: 0, y: 100 },
+        { x: 200, y: 100 },
+        { x: 200, y: 300 },
+        { x: 450, y: 300 },
+        { x: 450, y: 150 },
+        { x: 700, y: 150 }
+      ],
+      selectedBuildType: 'laser',
+      selectedTower: null,
+      animId: null,
+
+      init() {
+        this.canvas = document.getElementById('canvas-td');
+        if (!this.canvas) return;
+        this.ctx = this.canvas.getContext('2d');
+        this.initialized = true;
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+
+        this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
+        this.reset();
+      },
+
+      resize() {
+        if (!this.canvas) return;
+        this.canvas.width = this.canvas.parentElement.clientWidth;
+        this.canvas.height = this.canvas.parentElement.clientHeight;
+      },
+
+      reset() {
+        this.hp = 100;
+        this.energy = 175;
+        this.wave = 1;
+        this.towers = [];
+        this.creeps = [];
+        this.projectiles = [];
+        this.particles = [];
+        this.selectedTower = null;
+        document.getElementById('td-overlay').classList.add('hidden');
+        this.updateHUD();
+        if (this.animId) cancelAnimationFrame(this.animId);
+        this.loop();
+      },
+
+      selectBuildType(type) {
+        this.selectedBuildType = type;
+        document.querySelectorAll('.td-tower-card').forEach(c => c.classList.remove('border-blue-500/50'));
+        const btn = document.getElementById(`td-build-${type}`);
+        if (btn) btn.classList.add('border-blue-500/50');
+        AudioEngine.play('click');
+      },
+
+      toggleSpeed() {
+        this.speed = this.speed === 1 ? 2 : 1;
+        document.getElementById('td-speed-btn').innerText = `Speed: ${this.speed}x`;
+        AudioEngine.play('click');
+      },
+
+      nextWave() {
+        document.getElementById('td-overlay').classList.add('hidden');
+        const creepCount = 6 + this.wave * 2;
+        const isBossWave = this.wave % 5 === 0;
+
+        for (let i = 0; i < creepCount; i++) {
+          this.creeps.push({
+            x: this.path[0].x - (i * 35),
+            y: this.path[0].y,
+            pathIdx: 0,
+            hp: isBossWave ? 150 + (this.wave * 30) : 30 + (this.wave * 12),
+            maxHp: isBossWave ? 150 + (this.wave * 30) : 30 + (this.wave * 12),
+            speed: isBossWave ? 0.8 : 1.4,
+            isBoss: isBossWave
+          });
+        }
+        AudioEngine.play('click');
+      },
+
+      handleCanvasClick(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        const clickX = (e.clientX - rect.left) * scaleX;
+        const clickY = (e.clientY - rect.top) * scaleY;
+
+        // Check if existing tower clicked
+        const clickedTower = this.towers.find(t => Math.hypot(t.x - clickX, t.y - clickY) < 25);
+        if (clickedTower) {
+          this.selectedTower = clickedTower;
+          document.getElementById('td-inspect-desc').innerText = `${clickedTower.type.toUpperCase()} Tower (Level ${clickedTower.level})`;
+          document.getElementById('td-inspect-actions').classList.remove('hidden');
+          AudioEngine.play('click');
+          return;
+        }
+
+        // Otherwise build tower
+        const costs = { laser: 100, plasma: 175, cryo: 125 };
+        const cost = costs[this.selectedBuildType];
+
+        if (this.energy >= cost) {
+          this.energy -= cost;
+          this.towers.push({
+            x: clickX,
+            y: clickY,
+            type: this.selectedBuildType,
+            level: 1,
+            range: this.selectedBuildType === 'plasma' ? 140 : 100,
+            damage: this.selectedBuildType === 'plasma' ? 40 : (this.selectedBuildType === 'laser' ? 12 : 4),
+            cooldown: 0
+          });
+          AudioEngine.play('powerup');
+          this.updateHUD();
+        }
+      },
+
+      upgradeTower() {
+        if (this.selectedTower && this.energy >= 80) {
+          this.energy -= 80;
+          this.selectedTower.level++;
+          this.selectedTower.damage += 10;
+          this.selectedTower.range += 15;
+          AudioEngine.play('powerup');
+          this.updateHUD();
+        }
+      },
+
+      sellTower() {
+        if (this.selectedTower) {
+          this.energy += 50;
+          this.towers = this.towers.filter(t => t !== this.selectedTower);
+          this.selectedTower = null;
+          document.getElementById('td-inspect-actions').classList.add('hidden');
+          AudioEngine.play('click');
+          this.updateHUD();
+        }
+      },
+
+      updateHUD() {
+        document.getElementById('td-hp').innerText = this.hp;
+        document.getElementById('td-energy').innerText = this.energy;
+        document.getElementById('td-wave').innerText = `${this.wave} / 10`;
+        HighScores.set('strategy', this.wave);
+      },
+
+      loop() {
+        for (let s = 0; s < this.speed; s++) this.update();
+        this.render();
+        this.animId = requestAnimationFrame(() => this.loop());
+      },
+
+      update() {
+        // Creep Movement
+        for (let i = this.creeps.length - 1; i >= 0; i--) {
+          const c = this.creeps[i];
+          const target = this.path[c.pathIdx + 1];
+
+          if (target) {
+            const dx = target.x - c.x;
+            const dy = target.y - c.y;
+            const dist = Math.hypot(dx, dy);
+
+            if (dist < c.speed) {
+              c.pathIdx++;
+            } else {
+              c.x += (dx / dist) * c.speed;
+              c.y += (dy / dist) * c.speed;
+            }
+          } else {
+            // Reached core
+            this.hp -= c.isBoss ? 30 : 10;
+            AudioEngine.play('hit');
+            this.creeps.splice(i, 1);
+            this.updateHUD();
+
+            if (this.hp <= 0) {
+              AudioEngine.play('gameover');
+              document.getElementById('td-overlay-title').innerText = 'CORE DESTROYED';
+              document.getElementById('td-overlay').classList.remove('hidden');
+              return;
+            }
+          }
+        }
+
+        // Tower Targeting & Firing
+        this.towers.forEach(t => {
+          if (t.cooldown > 0) t.cooldown--;
+
+          if (t.cooldown <= 0) {
+            const target = this.creeps.find(c => Math.hypot(c.x - t.x, c.y - t.y) < t.range);
+            if (target) {
+              target.hp -= t.damage;
+              t.cooldown = t.type === 'plasma' ? 35 : 12;
+              AudioEngine.play('laser');
+
+              if (target.hp <= 0) {
+                this.energy += target.isBoss ? 50 : 15;
+                this.creeps = this.creeps.filter(cr => cr !== target);
+                this.updateHUD();
+              }
+            }
+          }
+        });
+
+        // Wave Completion Check
+        if (this.creeps.length === 0 && this.wave < 10) {
+          this.wave++;
+          this.updateHUD();
+        }
+      },
+
+      render() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Path rendering
+        this.ctx.strokeStyle = '#1e293b';
+        this.ctx.lineWidth = 36;
+        this.ctx.beginPath();
+        this.path.forEach((pt, i) => {
+          if (i === 0) this.ctx.moveTo(pt.x, pt.y);
+          else this.ctx.lineTo(pt.x, pt.y);
+        });
+        this.ctx.stroke();
+
+        // Towers
+        this.towers.forEach(t => {
+          this.ctx.fillStyle = t.type === 'laser' ? '#06b6d4' : (t.type === 'plasma' ? '#f59e0b' : '#a855f7');
+          this.ctx.beginPath();
+          this.ctx.arc(t.x, t.y, 16, 0, Math.PI * 2);
+          this.ctx.fill();
+        });
+
+        // Creeps
+        this.creeps.forEach(c => {
+          this.ctx.fillStyle = c.isBoss ? '#f43f5e' : '#22c55e';
+          this.ctx.beginPath();
+          this.ctx.arc(c.x, c.y, c.isBoss ? 14 : 8, 0, Math.PI * 2);
+          this.ctx.fill();
+        });
+      }
+    };
+
+    /* ==========================================================================
+       GAME 5: DUNGEON QUEST (RPG)
+       ========================================================================== */
+    const DungeonQuest = {
+      initialized: false,
+      floor: 1,
+      gold: 50,
+      potions: 2,
+      hero: { hp: 100, maxHp: 100, mp: 50, maxMp: 50, atk: 18, def: 4 },
+      enemy: null,
+
+      init() {
+        this.initialized = true;
+        this.reset();
+      },
+
+      reset() {
+        this.floor = 1;
+        this.gold = 50;
+        this.potions = 2;
+        this.hero = { hp: 100, maxHp: 100, mp: 50, maxMp: 50, atk: 18, def: 4 };
+        this.spawnEnemy();
+        this.updateHUD();
+        this.log('A dangerous dungeon quest begins!', 'text-purple-400');
+      },
+
+      spawnEnemy() {
+        const isBoss = this.floor % 5 === 0;
+        const names = ['Goblin Scout', 'Skeleton Warrior', 'Orc Berserker', 'Dark Sorcerer', 'Shadow Overlord'];
+        const name = isBoss ? 'SHADOW OVERLORD (BOSS)' : names[Math.floor(Math.random() * (names.length - 1))];
+        
+        this.enemy = {
+          name,
+          hp: isBoss ? 120 + (this.floor * 25) : 35 + (this.floor * 12),
+          maxHp: isBoss ? 120 + (this.floor * 25) : 35 + (this.floor * 12),
+          atk: 8 + (this.floor * 3),
+          isBoss
+        };
+        this.updateHUD();
+      },
+
+      log(msg, colorClass = 'text-slate-300') {
+        const logBox = document.getElementById('rpg-log');
+        const div = document.createElement('div');
+        div.className = colorClass;
+        div.innerText = `> ${msg}`;
+        logBox.appendChild(div);
+        logBox.scrollTop = logBox.scrollHeight;
+      },
+
+      action(type) {
+        if (!this.enemy || this.hero.hp <= 0) return;
+
+        AudioEngine.play('click');
+        let playerDmg = 0;
+
+        if (type === 'attack') {
+          playerDmg = Math.max(5, this.hero.atk + Math.floor(Math.random() * 6));
+          this.enemy.hp -= playerDmg;
+          this.log(`You slashed ${this.enemy.name} for ${playerDmg} damage!`, 'text-rose-400');
+        } else if (type === 'fireball') {
+          if (this.hero.mp >= 15) {
+            this.hero.mp -= 15;
+            playerDmg = Math.max(15, this.hero.atk * 1.8);
+            this.enemy.hp -= playerDmg;
+            AudioEngine.play('laser');
+            this.log(`Cast Fireball! Dealt ${Math.floor(playerDmg)} elemental damage!`, 'text-amber-400');
+          } else {
+            this.log('Not enough MP!', 'text-slate-500');
+            return;
+          }
+        } else if (type === 'lightning') {
+          if (this.hero.mp >= 20) {
+            this.hero.mp -= 20;
+            playerDmg = Math.max(20, this.hero.atk * 2.2);
+            this.enemy.hp -= playerDmg;
+            AudioEngine.play('powerup');
+            this.log(`Lightning Stun Bolt strikes ${this.enemy.name} for ${Math.floor(playerDmg)} dmg!`, 'text-cyan-400');
+          } else {
+            this.log('Not enough MP!', 'text-slate-500');
+            return;
+          }
+        } else if (type === 'defend') {
+          this.hero.mp = Math.min(this.hero.maxMp, this.hero.mp + 12);
+          this.log('Defensive stance! Restored +12 MP.', 'text-blue-400');
+        } else if (type === 'heal') {
+          if (this.potions > 0) {
+            this.potions--;
+            this.hero.hp = Math.min(this.hero.maxHp, this.hero.hp + 50);
+            this.log('Drank Health Potion! Restored +50 HP.', 'text-emerald-400');
+          } else {
+            this.log('No HP Potions left!', 'text-slate-500');
+            return;
+          }
+        }
+
+        // Check Enemy Defeated
+        if (this.enemy.hp <= 0) {
+          AudioEngine.play('victory');
+          const rewardGold = 20 + (this.floor * 10);
+          this.gold += rewardGold;
+          this.log(`Defeated ${this.enemy.name}! Earned +${rewardGold} Gold.`, 'text-amber-300');
+          HighScores.set('rpg', this.floor);
+
+          // Open Merchant Shop between floors
+          document.getElementById('rpg-shop-modal').classList.remove('hidden');
+          return;
+        }
+
+        // Enemy Turn Attack
+        setTimeout(() => {
+          const enemyDmg = Math.max(2, this.enemy.atk - this.hero.def);
+          this.hero.hp -= enemyDmg;
+          AudioEngine.play('hit');
+          this.log(`${this.enemy.name} strikes you for ${enemyDmg} damage!`, 'text-rose-500');
+
+          if (this.hero.hp <= 0) {
+            AudioEngine.play('gameover');
+            this.log('YOU WERE DEFEATED IN THE DUNGEON.', 'text-rose-600 font-bold');
+          }
+          this.updateHUD();
+        }, 300);
+
+        this.updateHUD();
+      },
+
+      closeShop() {
+        document.getElementById('rpg-shop-modal').classList.add('hidden');
+        this.floor++;
+        this.spawnEnemy();
+        this.updateHUD();
+        this.log(`Descended to Floor ${this.floor}!`, 'text-purple-300');
+      },
+
+      buyShop(type) {
+        if (type === 'potion' && this.gold >= 25) {
+          this.gold -= 25;
+          this.potions++;
+        } else if (type === 'elixir' && this.gold >= 20) {
+          this.gold -= 20;
+          this.hero.mp = Math.min(this.hero.maxMp, this.hero.mp + 30);
+        } else if (type === 'weapon' && this.gold >= 40) {
+          this.gold -= 40;
+          this.hero.atk += 5;
+        } else if (type === 'armor' && this.gold >= 40) {
+          this.gold -= 40;
+          this.hero.def += 3;
+        }
+        AudioEngine.play('powerup');
+        this.updateHUD();
+      },
+
+      updateHUD() {
+        document.getElementById('rpg-floor').innerText = this.floor;
+        document.getElementById('rpg-gold').innerText = this.gold;
+        document.getElementById('rpg-potions').innerText = this.potions;
+        document.getElementById('rpg-shop-gold').innerText = this.gold;
+
+        document.getElementById('rpg-hero-hp-text').innerText = `${Math.max(0, this.hero.hp)} / ${this.hero.maxHp}`;
+        document.getElementById('rpg-hero-mp-text').innerText = `${Math.max(0, this.hero.mp)} / ${this.hero.maxMp}`;
+
+        const hpPct = Math.max(0, (this.hero.hp / this.hero.maxHp) * 100);
+        const mpPct = Math.max(0, (this.hero.mp / this.hero.maxMp) * 100);
+        document.getElementById('rpg-hero-hp-bar').style.width = `${hpPct}%`;
+        document.getElementById('rpg-hero-mp-bar').style.width = `${mpPct}%`;
+
+        if (this.enemy) {
+          document.getElementById('rpg-enemy-name').innerText = this.enemy.name;
+          document.getElementById('rpg-enemy-hp-text').innerText = `${Math.max(0, this.enemy.hp)} / ${this.enemy.maxHp} HP`;
+          const enemyHpPct = Math.max(0, (this.enemy.hp / this.enemy.maxHp) * 100);
+          document.getElementById('rpg-enemy-hp-bar').style.width = `${enemyHpPct}%`;
+        }
+
+        this.renderCanvasSprite();
+      },
+
+      renderCanvasSprite() {
+        const canvas = document.getElementById('canvas-rpg');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (this.enemy) {
+          ctx.fillStyle = this.enemy.isBoss ? '#f43f5e' : '#a855f7';
+          ctx.fillRect(canvas.width / 2 - 25, canvas.height / 2 - 25, 50, 50);
+        }
+      }
+    };
+
+    // Initial setup on Window Load
+    window.addEventListener('load', () => {
+      // Audio setting preference
+      const savedMute = localStorage.getItem('arcade_sound_muted');
+      if (savedMute === 'true') toggleAudio();
+
+      HighScores.updateDisplay();
+
+      // Check Hash navigation
+      const hash = window.location.hash.replace('#', '');
+      if (['action', 'puzzle', 'adventure', 'strategy', 'rpg'].includes(hash)) {
+        switchTab(hash);
+      } else {
+        switchTab('hub');
+      }
+    });
+  </script>
+</body>
+</html>
